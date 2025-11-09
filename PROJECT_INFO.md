@@ -13,7 +13,7 @@ registrydumphelper-release/
 ├── 📄 LICENSE                            # MIT License
 ├── 📄 .gitignore                         # Git ignore pravidla
 │
-├── 🎮 registrydumphelper-1.0.1.jar      # ✅ Zkompilovaný mod (připravený k použití)
+├── 🎮 registrydumphelper-1.20.1-forge-1.0.3.jar  # ✅ Zkompilovaný mod v1.0.3
 ├── 📜 registryDump.js                    # ✅ KubeJS script (do kubejs/server_scripts/)
 │
 ├── 🔨 build.gradle                       # Gradle build konfigurace
@@ -29,9 +29,9 @@ registrydumphelper-release/
 │   └── main/
 │       ├── java/
 │       │   └── registrydumphelper/
-│       │       ├── RegistryDumpHelperMod.java      # Hlavní třída modu
-│       │       ├── RegistryDumpPlugin.java         # KubeJS plugin
-│       │       └── RegistryUtilBinding.java        # Registry access + file I/O
+│       │       ├── RegistryDumpHelperMod.java      # Hlavní třída modu (deprecated)
+│       │       ├── RegistryDumpPlugin.java         # KubeJS plugin + auto-split
+│       │       └── RegistryUtilBinding.java        # JSON splitting + file I/O
 │       └── resources/
 │           ├── kubejs.plugins.txt                   # Plugin registrace
 │           ├── pack.mcmeta                          # Resource pack metadata
@@ -48,30 +48,36 @@ registrydumphelper-release/
 
 ### Pro běžné uživatele:
 
-1. Stáhni `registrydumphelper-1.0.1.jar` a `registryDump.js`
-2. Zkopíruj `registrydumphelper-1.0.1.jar` do `mods/`
+1. Stáhni `registrydumphelper-1.20.1-forge-1.0.3.jar` a `registryDump.js`
+2. Zkopíruj JAR do `mods/`
 3. Zkopíruj `registryDump.js` do `kubejs/server_scripts/`
-4. Restartuj server
-5. Soubory se vytvoří v `kubejs/exports/`
+4. Spusť Minecraft a načti svět
+5. Počkaj 2-3 sekundy
+6. Soubory najdeš v `exports/` (v kořeni instance, NE v kubejs/)
 
 ### Pro vývojáře:
 
 ```bash
-gradlew.bat build
+# Windows
+gradlew.bat jar
+
+# Linux/Mac
+./gradlew jar
 ```
 
 ## 📊 Velikosti souborů
 
-- **registrydumphelper-1.0.1.jar**: ~5.7 KB
-- **registryDump.js**: ~50 KB
-- **Celkem zdrojový kód**: ~15 KB
+- **registrydumphelper-1.20.1-forge-1.0.3.jar**: ~8.4 KB (v1.0.3)
+- **registryDump.js**: ~52 KB
+- **Celkem zdrojový kód**: ~18 KB
 
 ## 🎯 Co tento balíček obsahuje
 
 ### ✅ Připravené k použití:
 
-- Zkompilovaný JAR mod
+- Zkompilovaný JAR mod (v1.0.3)
 - Funkční KubeJS script
+- Automatické rozdělování JSON souborů
 - Kompletní dokumentace
 - Ukázky výstupů
 
@@ -79,23 +85,39 @@ gradlew.bat build
 
 - Plný zdrojový kód
 - Gradle build systém
-- Komentovaný kód
+- Komentovaný kód včetně auto-split logiky
 - Build instrukce
 
 ### ✅ Pro GitHub:
 
-- README.md
+- README.md (aktualizovaný pro v1.0.3)
 - LICENSE (MIT)
 - .gitignore
-- CHANGELOG.md
+- CHANGELOG.md (verze 1.0.1, 1.0.2, 1.0.3)
 - Příklady
 
 ## 📋 Požadavky
 
 - Minecraft: 1.20.1
 - Forge: 47.4.0+
-- KubeJS: 2001.6.5-build.16+
+- KubeJS: 2001.6.5-build.16+ (KubeJS 6+)
 - Java: 17+
+
+## 🆕 Co je nového v v1.0.3
+
+### Hlavní změny:
+
+1. **Automatické rozdělování**: Background thread automaticky rozdělí `registry-data-all.json` na jednotlivé soubory
+2. **Nové umístění**: Soubory se ukládají do `exports/` v kořeni instance místo `kubejs/exports/`
+3. **KubeJS 6+ kompatibilita**: Plná podpora pro KubeJS 6+ včetně obcházení `java()` omezení
+4. **Žádný restart**: Není třeba restartovat server, vše funguje okamžitě
+
+### Technické detaily:
+
+- Auto-split thread čeká na vytvoření `registry-data-all.json`
+- Jednoduchý JSON parser s bracket matching
+- Vytváří 3 individuální soubory automaticky do 2 sekund
+- Obchází KubeJS 6+ binding access omezení
 
 ## 🔧 Build ze zdrojů
 

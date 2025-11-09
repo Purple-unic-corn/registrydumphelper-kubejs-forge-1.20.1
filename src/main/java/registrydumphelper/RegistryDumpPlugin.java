@@ -59,7 +59,50 @@ public class RegistryDumpPlugin extends KubeJSPlugin {
 
     @Override
     public void registerBindings(BindingsEvent event) {
-        event.add("RegistryUtil", new RegistryUtilBinding());
-        LOGGER.info("KubeJS RegistryUtil binding registered v1.0.1");
+        // Vytvoř složku exports při startu
+        try {
+            java.nio.file.Path exportsDir = java.nio.file.Paths.get("exports");
+            if (!java.nio.file.Files.exists(exportsDir)) {
+                java.nio.file.Files.createDirectories(exportsDir);
+                LOGGER.info("✓ Created exports directory at startup: " + exportsDir.toAbsolutePath());
+            } else {
+                LOGGER.info("✓ Exports directory already exists: " + exportsDir.toAbsolutePath());
+            }
+        } catch (Exception e) {
+            LOGGER.error("✗ Failed to create exports directory: " + e.getMessage(), e);
+        }
+
+        // Registruj binding
+        RegistryUtilBinding binding = new RegistryUtilBinding();
+        event.add("RegistryUtil", binding);
+
+        // Registruj také static metodu pro split
+        event.add("splitRegistryData", (Runnable) RegistryUtilBinding::splitRegistryDataAll);
+
+        // Spusť vlákno které čeká na vytvoření registry-data-all.json a pak ho
+        // automaticky rozdělí
+        new Thread(() -> {
+            try {
+                java.nio.file.Path allDataFile = java.nio.file.Paths.get("exports/registry-data-all.json");
+
+                // Počkej až 30 sekund na vytvoření souboru
+                for (int i = 0; i < 60; i++) {
+                    Thread.sleep(500);
+                    if (java.nio.file.Files.exists(allDataFile)) {
+                        // Soubor existuje, počkej ještě chvíli aby se dokončil zápis
+                        Thread.sleep(1000);
+                        LOGGER.info("✓ Detected registry-data-all.json, auto-splitting...");
+                        RegistryUtilBinding.splitRegistryDataAll();
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Auto-split thread error: " + e.getMessage());
+            }
+        }, "RegistryDump-AutoSplit").start();
+
+        LOGGER.info("KubeJS RegistryUtil binding registered v1.0.3");
+        LOGGER.info("  Binding class: " + binding.getClass().getName());
+        LOGGER.info("  Event type: " + event.getClass().getName());
     }
 }
