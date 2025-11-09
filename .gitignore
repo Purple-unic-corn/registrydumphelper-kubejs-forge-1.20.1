@@ -1,0 +1,37 @@
+# Build artifacts
+build/
+.gradle/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# Gradle
+.gradletasknamecache
+gradle-app.setting
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Runtime
+run/
+logs/
+
+# Eclipse
+bin/

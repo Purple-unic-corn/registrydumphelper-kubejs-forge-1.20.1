@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+}
+
+group = 'registrydumphelper'
+version = '1.0.1'
+
+// Kompilace cílená na Java 17 bez nutnosti instalovat JDK 17 (použije aktuální JDK, např. 21/25)
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.latvian.dev/releases' }
+    maven { url = 'https://maven.architectury.dev/' }
+}
+
+dependencies {
+    // Forge varianta KubeJS (podle tvé složky mods: kubejs-forge-2001.6.5-build.16.jar)
+    compileOnly files('..\\..\\mods\\kubejs-forge-2001.6.5-build.16.jar')
+    // Forge runtime JARy pro kompilaci @Mod anotace a základních tříd (rychlý hack místo ForgeGradle)
+    // Pozor: cesta k Install je na úrovni ...\minecraft\Install (o 4 úrovně výš)
+    compileOnly files(
+        '..\\..\\..\\..\\Install\\libraries\\net\\minecraftforge\\javafmllanguage\\1.20.1-47.4.0\\javafmllanguage-1.20.1-47.4.0.jar',
+        '..\\..\\..\\..\\Install\\libraries\\net\\minecraftforge\\fmlcore\\1.20.1-47.4.0\\fmlcore-1.20.1-47.4.0.jar',
+        '..\\..\\..\\..\\Install\\libraries\\net\\minecraftforge\\mclanguage\\1.20.1-47.4.0\\mclanguage-1.20.1-47.4.0.jar',
+        '..\\..\\..\\..\\Install\\libraries\\net\\minecraftforge\\lowcodelanguage\\1.20.1-47.4.0\\lowcodelanguage-1.20.1-47.4.0.jar',
+        '..\\..\\..\\..\\Install\\libraries\\net\\minecraftforge\\forge\\1.20.1-47.4.0\\forge-1.20.1-47.4.0-universal.jar'
+    )
+    // Logování přes Log4j API (Forge používá Log4j) – pro kompilaci stačí API
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.19.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// Pomocný úkol: vypíše obsah vygenerovaného JARu
+tasks.register('listJar') {
+    dependsOn tasks.named('jar')
+    doLast {
+        def jarTask = tasks.named('jar').get()
+        def jarFile = jarTask.archiveFile.get().asFile
+        println "JAR path: ${jarFile.absolutePath}"
+        def zip = new java.util.zip.ZipFile(jarFile)
+        try {
+            def e = zip.entries()
+            while (e.hasMoreElements()) {
+                def entry = e.nextElement()
+                println entry.name
+            }
+        } finally {
+            zip.close()
+        }
+    }
+}

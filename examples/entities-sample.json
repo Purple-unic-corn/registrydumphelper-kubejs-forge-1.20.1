@@ -1,0 +1,26 @@
+[
+  {
+    "id": "minecraft:zombie",
+    "category": "monster",
+    "fireImmune": false,
+    "canSpawnFarFromPlayer": true,
+    "clientTrackingRange": 8,
+    "updateInterval": 3
+  },
+  {
+    "id": "minecraft:creeper",
+    "category": "monster",
+    "fireImmune": false,
+    "canSpawnFarFromPlayer": false,
+    "clientTrackingRange": 8,
+    "updateInterval": 3
+  },
+  {
+    "id": "minecraft:enderman",
+    "category": "monster",
+    "fireImmune": false,
+    "canSpawnFarFromPlayer": false,
+    "clientTrackingRange": 8,
+    "updateInterval": 3
+  }
+]

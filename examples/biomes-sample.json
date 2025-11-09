@@ -1,0 +1,29 @@
+[
+  {
+    "id": "minecraft:plains",
+    "name": "Plains",
+    "category": "plains",
+    "temperature": 0.8,
+    "precipitation": "rain",
+    "hasPrecipitation": true,
+    "downfall": 0.4
+  },
+  {
+    "id": "minecraft:desert",
+    "name": "Desert",
+    "category": "desert",
+    "temperature": 2.0,
+    "precipitation": "none",
+    "hasPrecipitation": false,
+    "downfall": 0.0
+  },
+  {
+    "id": "minecraft:frozen_ocean",
+    "name": "Frozen Ocean",
+    "category": "ocean",
+    "temperature": 0.0,
+    "precipitation": "snow",
+    "hasPrecipitation": true,
+    "downfall": 0.5
+  }
+]

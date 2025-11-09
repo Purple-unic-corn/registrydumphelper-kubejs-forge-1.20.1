@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[1,]"
+license="LGPL-3.0"
+
+[[mods]]
+modId="registrydumphelper"
+version="1.0.1"
+displayName="Registry Dump Helper"
+description="Exposes Minecraft registries to KubeJS via a safe binding."
+
+author="Generated"

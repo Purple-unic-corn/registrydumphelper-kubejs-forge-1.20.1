@@ -1,0 +1,24 @@
+[
+  {
+    "id": "minecraft:village_plains",
+    "biomes": [
+      "minecraft:plains",
+      "minecraft:sunflower_plains",
+      "minecraft:meadow"
+    ],
+    "terrainAdaptation": "beard_thin",
+    "spawnOverrides": {}
+  },
+  {
+    "id": "minecraft:ancient_city",
+    "biomes": ["minecraft:deep_dark"],
+    "terrainAdaptation": "beard_box",
+    "spawnOverrides": {}
+  },
+  {
+    "id": "minecraft:stronghold",
+    "biomes": ["*"],
+    "terrainAdaptation": "bury",
+    "spawnOverrides": {}
+  }
+]
