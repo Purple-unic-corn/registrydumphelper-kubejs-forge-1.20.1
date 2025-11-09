@@ -231,4 +231,75 @@ public class RegistryUtilBinding {
             return false;
         }
     }
+
+    /**
+     * Instance metoda pro volání z JavaScriptu
+     */
+    public void splitRegistryData() {
+        splitRegistryDataAll();
+    }
+
+    /**
+     * Rozdělí registry-data-all.json na jednotlivé soubory.
+     * Static metoda pro snadné volání z JavaScriptu.
+     */
+    public static void splitRegistryDataAll() {
+        try {
+            Path allDataFile = Paths.get("exports/registry-data-all.json");
+            if (!Files.exists(allDataFile)) {
+                System.err.println("[RegistryUtil] registry-data-all.json does not exist");
+                return;
+            }
+
+            System.out.println("[RegistryUtil] Reading registry-data-all.json...");
+            String content = Files.readString(allDataFile, StandardCharsets.UTF_8);
+
+            // Jednoduchý JSON parser pro naše účely
+            // Hledáme "biomes": [array], "entities": [array], "structures": [array]
+            String[] sections = { "biomes", "entities", "structures" };
+
+            for (String section : sections) {
+                try {
+                    int startIdx = content.indexOf("\"" + section + "\"");
+                    if (startIdx == -1)
+                        continue;
+
+                    int arrayStart = content.indexOf("[", startIdx);
+                    if (arrayStart == -1)
+                        continue;
+
+                    int arrayEnd = findMatchingBracket(content, arrayStart);
+                    if (arrayEnd == -1)
+                        continue;
+
+                    String arrayContent = content.substring(arrayStart, arrayEnd + 1);
+                    Path outFile = Paths.get("exports/" + section + ".json");
+                    Files.writeString(outFile, arrayContent, StandardCharsets.UTF_8);
+                    System.out.println("[RegistryUtil] ✓ Created " + section + ".json");
+                } catch (Exception e) {
+                    System.err.println("[RegistryUtil] Failed to extract " + section + ": " + e.getMessage());
+                }
+            }
+
+            System.out.println("[RegistryUtil] ✓✓✓ Split completed successfully!");
+        } catch (Throwable t) {
+            System.err.println("[RegistryUtil] Failed to split registry-data-all.json: " + t.getMessage());
+            t.printStackTrace();
+        }
+    }
+
+    private static int findMatchingBracket(String s, int start) {
+        int depth = 0;
+        for (int i = start; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '[')
+                depth++;
+            else if (c == ']') {
+                depth--;
+                if (depth == 0)
+                    return i;
+            }
+        }
+        return -1;
+    }
 }

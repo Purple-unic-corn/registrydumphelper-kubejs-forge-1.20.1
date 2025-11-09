@@ -1409,6 +1409,31 @@ function dumpRegistries(server) {
       } catch (e) {
         console.log('[registryDump] write summary/probe: ' + e);
       }
+
+      // Zavoláme split funkci pro vytvoření individuálních souborů
+      try {
+        // Zkusíme různé způsoby zavolání split funkce
+        if (global.RegistryUtil && global.RegistryUtil.splitRegistryData) {
+          console.log(
+            '[registryDump] Calling RegistryUtil.splitRegistryData...'
+          );
+          global.RegistryUtil.splitRegistryData();
+          console.log('[registryDump] Split completed!');
+        } else if (
+          global.splitRegistryData &&
+          typeof global.splitRegistryData === 'function'
+        ) {
+          console.log('[registryDump] Calling global.splitRegistryData...');
+          global.splitRegistryData();
+          console.log('[registryDump] Split completed!');
+        } else {
+          console.log(
+            '[registryDump] WARNING: splitRegistryData not available (neither RegistryUtil.splitRegistryData nor global.splitRegistryData)'
+          );
+        }
+      } catch (e) {
+        console.log('[registryDump] ERROR calling splitRegistryData: ' + e);
+      }
     } else {
       console.log('[registryDump] skipped writing JSON (all empty)');
     }
