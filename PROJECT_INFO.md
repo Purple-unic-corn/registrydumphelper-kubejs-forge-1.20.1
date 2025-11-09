@@ -13,7 +13,7 @@ registrydumphelper-release/
 ├── 📄 LICENSE                            # MIT License
 ├── 📄 .gitignore                         # Git ignore pravidla
 │
-├── 🎮 registrydumphelper-1.20.1-forge-1.0.2.jar  # ✅ Zkompilovaný mod v1.0.3
+├── 🎮 registrydumphelper-1.20.1-forge-1.0.3.jar  # ✅ Zkompilovaný mod v1.0.3
 ├── 📜 registryDump.js                    # ✅ KubeJS script (do kubejs/server_scripts/)
 │
 ├── 🔨 build.gradle                       # Gradle build konfigurace
@@ -48,7 +48,7 @@ registrydumphelper-release/
 
 ### Pro běžné uživatele:
 
-1. Stáhni `registrydumphelper-1.20.1-forge-1.0.2.jar` a `registryDump.js`
+1. Stáhni `registrydumphelper-1.20.1-forge-1.0.3.jar` a `registryDump.js`
 2. Zkopíruj JAR do `mods/`
 3. Zkopíruj `registryDump.js` do `kubejs/server_scripts/`
 4. Spusť Minecraft a načti svět
@@ -67,7 +67,7 @@ gradlew.bat jar
 
 ## 📊 Velikosti souborů
 
-- **registrydumphelper-1.20.1-forge-1.0.2.jar**: ~8.4 KB (v1.0.3)
+- **registrydumphelper-1.20.1-forge-1.0.3.jar**: ~8.4 KB (v1.0.3)
 - **registryDump.js**: ~52 KB
 - **Celkem zdrojový kód**: ~18 KB
 

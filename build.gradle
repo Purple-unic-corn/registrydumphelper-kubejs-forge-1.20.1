@@ -3,12 +3,13 @@ plugins {
 }
 
 group = 'registrydumphelper'
-version = '1.20.1-forge-1.0.2'
+version = '1.20.1-forge-1.0.3'
 
 // Nastavení názvu JAR souboru
+// Formát: název-verzemc-modloader-verze
 jar {
     archiveBaseName = 'registrydumphelper'
-    archiveVersion = '1.20.1-forge-1.0.2'
+    archiveVersion = '1.20.1-forge-1.0.3'
 }
 
 // Kompilace cílená na Java 17 bez nutnosti instalovat JDK 17 (použije aktuální JDK, např. 21/25)

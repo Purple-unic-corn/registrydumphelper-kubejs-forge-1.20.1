@@ -6,9 +6,9 @@ Script pro export registrů z Minecraftu (biomy, entity, struktury) do JSON soub
 
 ## 🔧 Co je potřeba
 
-### 1. Helper Mod (registrydumphelper-1.20.1-forge-1.0.2.jar)
+### 1. Helper Mod (registrydumphelper-1.20.1-forge-1.0.3.jar)
 
-- **Umístění:** `mods/registrydumphelper-1.20.1-forge-1.0.2.jar`
+- **Umístění:** `mods/registrydumphelper-1.20.1-forge-1.0.3.jar`
 - **Účel:**
   - Poskytuje přístup k Java NIO API pro zápis souborů (KubeJS 6+ má omezení)
   - Automaticky vytváří složku `exports/` při startu
@@ -220,7 +220,7 @@ To znamená, že JavaScript nemůže přímo volat Java metody, i když jsou reg
 ### Soubory se negenerují
 
 1. ✅ Zkontroluj logy - hledej "auto-splitting" nebo "Split completed"
-2. ✅ Ověř, že `mods/registrydumphelper-1.20.1-forge-1.0.2.jar` existuje
+2. ✅ Ověř, že `mods/registrydumphelper-1.20.1-forge-1.0.3.jar` existuje
 3. ✅ Zkontroluj, že `exports/registry-data-all.json` existuje
 4. ❗ Počkej plných 5 sekund po načtení světa (auto-split běží na pozadí)
 5. ✅ Zkontroluj složku `exports/` v kořenovém adresáři instance (ne v `kubejs/exports/`)
@@ -259,7 +259,7 @@ Znamená to, že auto-split ještě neproběhl:
 Pokud máš v `mods/` starší verzi:
 
 1. Smaž `registrydumphelper-1.0.1.jar`
-2. Zkopíruj nový `registrydumphelper-1.20.1-forge-1.0.2.jar`
+2. Zkopíruj nový `registrydumphelper-1.20.1-forge-1.0.3.jar`
 3. Restartuj Minecraft
 
 ## 📊 Statistiky (aktuální dump)
@@ -336,7 +336,7 @@ Pokud máš v `mods/` starší verzi:
 
 ## 🎯 Rychlý start checklist
 
-- [ ] Helper mod `registrydumphelper-1.20.1-forge-1.0.2.jar` v `mods/` složce
+- [ ] Helper mod `registrydumphelper-1.20.1-forge-1.0.3.jar` v `mods/` složce
 - [ ] Minecraft spuštěn
 - [ ] Svět načten
 - [ ] Počkat 2-3 sekundy po načtení
@@ -353,7 +353,7 @@ Pokud máš v `mods/` starší verzi:
 ```
 <Instance>\
 ├── mods\
-│   └── registrydumphelper-1.20.1-forge-1.0.2.jar
+│   └── registrydumphelper-1.20.1-forge-1.0.3.jar
 ├── kubejs\
 │   └── server_scripts\
 │       └── registryDump.js

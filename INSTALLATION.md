@@ -6,14 +6,14 @@
 
 1. **Download pre-built JAR:**
 
-   - Download `registrydumphelper-1.20.1-forge-1.0.2.jar` from releases
+   - Download `registrydumphelper-1.20.1-forge-1.0.3.jar` from releases
 
 2. **Install the files:**
 
    ```
    minecraft/
    ├── mods/
-   │   └── registrydumphelper-1.20.1-forge-1.0.2.jar  ← Copy here
+   │   └── registrydumphelper-1.20.1-forge-1.0.3.jar  ← Copy here
    └── kubejs/
        └── server_scripts/
            └── registryDump.js                         ← Copy here
@@ -57,13 +57,13 @@ gradlew.bat jar
 ./gradlew jar
 ```
 
-Built JAR will be in: `build/libs/registrydumphelper-1.20.1-forge-1.0.2.jar`
+Built JAR will be in: `build/libs/registrydumphelper-1.20.1-forge-1.0.3.jar`
 
 ### Project Structure
 
 ```
 registrydumphelper-release/
-├── registrydumphelper-1.20.1-forge-1.0.2.jar  # Pre-built mod (v1.0.3)
+├── registrydumphelper-1.20.1-forge-1.0.3.jar  # Pre-built mod (v1.0.3)
 ├── registryDump.js                             # KubeJS script
 ├── README.md                                   # Full documentation
 ├── INSTALLATION.md                             # This file
@@ -141,7 +141,7 @@ This mod should work with:
 ### Files not generating?
 
 1. ✅ Check that `exports/` folder exists **in instance root** (not in `kubejs/`)
-2. ✅ Verify `mods/registrydumphelper-1.20.1-forge-1.0.2.jar` exists
+2. ✅ Verify `mods/registrydumphelper-1.20.1-forge-1.0.3.jar` exists
 3. ✅ Check that `registry-data-all.json` exists in `exports/`
 4. ⏱️ **Wait 5 seconds** after world loads (auto-split runs in background)
 5. 🔍 Check logs for `✓ Detected registry-data-all.json, auto-splitting...`
@@ -168,7 +168,7 @@ Files should be in **instance root**, example:
 If you have `registrydumphelper-1.0.1.jar`:
 
 1. Delete the old JAR from `mods/`
-2. Install `registrydumphelper-1.20.1-forge-1.0.2.jar`
+2. Install `registrydumphelper-1.20.1-forge-1.0.3.jar`
 3. Restart Minecraft
 
 ### Check logs for errors:
