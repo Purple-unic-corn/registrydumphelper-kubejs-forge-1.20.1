@@ -70,7 +70,7 @@ function dumpRegistries(server) {
     var DEBUG_SCAN = true; // projde registryAccess.registries() stream a hledá dle názvu
     var DEBUG_BRUTE = false; // hluboký brute-force přes reflexi (pomalé, jen pro diagnostiku)
     // Ujisti se, že cílová složka existuje – vynecháno (java.io.File blokováno class filtrem v tomto buildu)
-    // JsonIO.write níže cíl 'kubejs/exports' obvykle vytvoří adresář automaticky.
+    // JsonIO.write níže cíl 'exports' obvykle vytvoří adresář automaticky.
 
     // Java API (1.20.1)
     var Registries = global.__RegistryDump_Registries;
@@ -574,14 +574,14 @@ function dumpRegistries(server) {
       }
       if (results && results.length > 0) {
         try {
-          JsonIO.write('kubejs/exports/registry-debug.json', debug);
+          JsonIO.write('exports/registry-debug.json', debug);
         } catch (_) {}
         return results;
       }
       if (DEBUG_BRUTE) {
         console.log('[registryDump] NO ENTRIES for ' + lbl + ' via BruteDeep');
         try {
-          JsonIO.write('kubejs/exports/registry-debug.json', debug);
+          JsonIO.write('exports/registry-debug.json', debug);
         } catch (_) {}
       }
       return [];
@@ -1030,10 +1030,10 @@ function dumpRegistries(server) {
           }
         }
         try {
-          JsonIO.write('kubejs/exports/registry-kubejs-all.json', aggregate);
+          JsonIO.write('exports/registry-kubejs-all.json', aggregate);
         } catch (_wagg) {}
         try {
-          JsonIO.write('kubejs/exports/registry-kubejs-counts.json', counts);
+          JsonIO.write('exports/registry-kubejs-counts.json', counts);
         } catch (_wc) {}
         console.log(
           '[registryDump] dynamic KubeJS registry scan keys=' + regKeys.length
@@ -1247,7 +1247,7 @@ function dumpRegistries(server) {
       console.log('[registryDump] plugin RegistryUtil fallback error: ' + _plg);
     }
 
-    // Zápis do JSON souborů do kubejs/exports
+    // Zápis do JSON souborů do /exports
     // Zápisy prováděj jen pokud máme nenulové hodnoty (zabrání přepsání platných dat nulami při neúspěšném pozdním pokusu)
     if (biomes.length || entities.length || structures.length) {
       console.log(
@@ -1261,11 +1261,28 @@ function dumpRegistries(server) {
 
       var writeSuccess = { biomes: false, entities: false, structures: false };
 
+      // Debug: Zkontroluj dostupnost RegistryUtil
+      console.log('[registryDump] Checking RegistryUtil availability...');
+      console.log(
+        '[registryDump] global.RegistryUtil exists: ' + !!global.RegistryUtil
+      );
+      if (global.RegistryUtil) {
+        console.log(
+          '[registryDump] RegistryUtil type: ' + typeof global.RegistryUtil
+        );
+        console.log(
+          '[registryDump] RegistryUtil.writeJsonFile exists: ' +
+            !!global.RegistryUtil.writeJsonFile
+        );
+        console.log(
+          '[registryDump] RegistryUtil.writeJsonFile type: ' +
+            typeof global.RegistryUtil.writeJsonFile
+        );
+      }
+
       // Primární metoda: RegistryUtil.writeJsonFile (Java NIO)
-      if (
-        global.RegistryUtil &&
-        typeof global.RegistryUtil.writeJsonFile === 'function'
-      ) {
+      // Zkus použít writeJsonFile i když typeof není 'function' (Java metody mohou být jiný typ)
+      if (global.RegistryUtil && global.RegistryUtil.writeJsonFile) {
         console.log(
           '[registryDump] Using RegistryUtil.writeJsonFile (Java NIO)...'
         );
@@ -1273,8 +1290,9 @@ function dumpRegistries(server) {
         try {
           var biomesJson = JSON.stringify(biomes, null, 2);
           writeSuccess.biomes = global.RegistryUtil.writeJsonFile(
-            'kubejs/exports/biomes.json',
-            biomesJson
+            'exports/biomes.json',
+            biomesJson,
+            mcServer
           );
           console.log(
             '[registryDump] biomes.json: ' +
@@ -1289,8 +1307,9 @@ function dumpRegistries(server) {
         try {
           var entitiesJson = JSON.stringify(entities, null, 2);
           writeSuccess.entities = global.RegistryUtil.writeJsonFile(
-            'kubejs/exports/entities.json',
-            entitiesJson
+            'exports/entities.json',
+            entitiesJson,
+            mcServer
           );
           console.log(
             '[registryDump] entities.json: ' +
@@ -1305,8 +1324,9 @@ function dumpRegistries(server) {
         try {
           var structuresJson = JSON.stringify(structures, null, 2);
           writeSuccess.structures = global.RegistryUtil.writeJsonFile(
-            'kubejs/exports/structures.json',
-            structuresJson
+            'exports/structures.json',
+            structuresJson,
+            mcServer
           );
           console.log(
             '[registryDump] structures.json: ' +
@@ -1322,6 +1342,9 @@ function dumpRegistries(server) {
           '[registryDump] WARNING: RegistryUtil.writeJsonFile not available!'
         );
         console.log('[registryDump] Using emergency text-based fallback...');
+        console.log(
+          '[registryDump] NOTE: exports folder should be created by Java plugin at startup'
+        );
 
         // Emergency fallback: Zapiš všechna data do jednoho objektu
         // JsonIO selhává při zápisu pole, ale objekt s vlastnostmi funguje
@@ -1340,7 +1363,7 @@ function dumpRegistries(server) {
               note: 'Split this file manually or restart server to use helper mod',
             },
           };
-          JsonIO.write('kubejs/exports/registry-data-all.json', allData);
+          JsonIO.write('exports/registry-data-all.json', allData);
           console.log(
             '[registryDump] Emergency: Written all data to registry-data-all.json'
           );
@@ -1378,8 +1401,8 @@ function dumpRegistries(server) {
           t_total_ms: Date.now() - (global.__kjs_registry_dump_start_ms || 0),
           ts: String(new Date()),
         };
-        JsonIO.write('kubejs/exports/registry-dump.summary.json', summary);
-        JsonIO.write('kubejs/exports/_probe.json', {
+        JsonIO.write('exports/registry-dump.summary.json', summary);
+        JsonIO.write('exports/_probe.json', {
           ok: true,
           ts: summary.ts,
         });

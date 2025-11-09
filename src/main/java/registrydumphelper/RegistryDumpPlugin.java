@@ -59,7 +59,25 @@ public class RegistryDumpPlugin extends KubeJSPlugin {
 
     @Override
     public void registerBindings(BindingsEvent event) {
-        event.add("RegistryUtil", new RegistryUtilBinding());
-        LOGGER.info("KubeJS RegistryUtil binding registered v1.0.1");
+        // Vytvoř složku exports při startu
+        try {
+            java.nio.file.Path exportsDir = java.nio.file.Paths.get("exports");
+            if (!java.nio.file.Files.exists(exportsDir)) {
+                java.nio.file.Files.createDirectories(exportsDir);
+                LOGGER.info("✓ Created exports directory at startup: " + exportsDir.toAbsolutePath());
+            } else {
+                LOGGER.info("✓ Exports directory already exists: " + exportsDir.toAbsolutePath());
+            }
+        } catch (Exception e) {
+            LOGGER.error("✗ Failed to create exports directory: " + e.getMessage(), e);
+        }
+
+        // Registruj binding
+        RegistryUtilBinding binding = new RegistryUtilBinding();
+        event.add("RegistryUtil", binding);
+        
+        LOGGER.info("KubeJS RegistryUtil binding registered v1.0.2");
+        LOGGER.info("  Binding class: " + binding.getClass().getName());
+        LOGGER.info("  Event type: " + event.getClass().getName());
     }
 }
