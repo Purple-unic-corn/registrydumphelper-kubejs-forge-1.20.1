@@ -1,137 +1,131 @@
-# Registry Dump - Návod k použití
+# Registry Dump Helper - Complete Guide
 
-## 📋 Přehled
+**A KubeJS mod for exporting Minecraft registry data (Biomes, Entities, Structures) to JSON**
 
-Script pro export registrů z Minecraftu (biomy, entity, struktury) do JSON souborů přímo do složky Minecraft instance.
+---
 
-## 🔧 Co je potřeba
+## � Overview
 
-### 1. Helper Mod (registrydumphelper-1.20.1-forge-1.0.3.jar)
+Registry Dump Helper is a lightweight helper mod + KubeJS script that automatically exports Minecraft registry data to JSON files. Perfect for modpack creators, content developers, or anyone needing structured registry information.
 
-- **Umístění:** `mods/registrydumphelper-1.20.1-forge-1.0.3.jar`
-- **Účel:**
-  - Poskytuje přístup k Java NIO API pro zápis souborů (KubeJS 6+ má omezení)
-  - Automaticky vytváří složku `exports/` při startu
-  - Automaticky rozděluje `registry-data-all.json` na jednotlivé soubory
-- **Verze:** 1.0.3
+### Key Features
 
-### 2. KubeJS Script (registryDump.js)
+✅ **Automatic Export** - Runs automatically on server startup  
+✅ **Multiple Formats** - Separate JSON files for biomes, entities, and structures  
+✅ **KubeJS 6+ Compatible** - Works around KubeJS security restrictions  
+✅ **Zero Configuration** - Drop and forget  
+✅ **Easy Access** - Chat commands or manual reload  
+✅ **Detailed Data** - Full registry information with properties  
 
-- **Umístění:** `kubejs/server_scripts/registryDump.js`
-- **Funkce:**
-  - Sbírá data z Minecraft registrů (BIOME, ENTITY_TYPE, STRUCTURE)
-  - Exportuje data přes JsonIO do `registry-data-all.json`
-  - Podporuje více metod spuštění
+---
 
-### 3. Export složka
+## 🚀 Quick Start
 
-- **Umístění:** `exports/` (v kořenovém adresáři instance, např. `C:\Users\...\Instances\Unicorn\exports\`)
-- **Vytvořena:** ✅ Automaticky při startu modu
-- **Vygenerované soubory:**
-  - `biomes.json` (81 biomů) - **automaticky rozděleno z registry-data-all.json**
-  - `entities.json` (143 entit) - **automaticky rozděleno z registry-data-all.json**
-  - `structures.json` (38 struktur) - **automaticky rozděleno z registry-data-all.json**
-  - `registry-data-all.json` (kombinovaná data)
-  - `registry-dump.summary.json` (statistiky)
-  - `_probe.json` (status check)
+### Installation
 
-## 🚀 Jak používat
+1. Download both files from releases:
+   - `registrydumphelper-1.20.1-forge-1.0.3.jar`
+   - `registryDump.js`
 
-### Metoda 1: Automatický dump při startu (DOPORUČENO)
+2. Install in your instance:
+   ```
+   minecraft/
+   ├── mods/
+   │   └── registrydumphelper-1.20.1-forge-1.0.3.jar
+   └── kubejs/
+       └── server_scripts/
+           └── registryDump.js
+   ```
 
-Script se automaticky spustí při načtení serveru (`ServerEvents.loaded`).
+3. Start Minecraft and load a world
 
-**Co se stane:**
+4. **Wait 2-3 seconds** - files generate automatically!
 
-1. Při načtení světa se automaticky spustí dump
-2. Data se zapíší do `exports/registry-data-all.json`
-3. **Automaticky** (do 2 sekund) se soubor rozdělí na:
-   - `exports/biomes.json`
-   - `exports/entities.json`
-   - `exports/structures.json`
+5. Find your files in the instance root (`exports/` folder)
 
-### Metoda 2: Chat příkaz
+### Using the Export
 
-V Minecraft chatu napiš:
+Three ways to trigger the export:
 
+#### Method 1: Automatic (Recommended)
+- Runs automatically on server load
+- No action needed!
+
+#### Method 2: Chat Command
 ```
 !dumpregs
 ```
+Type in chat, wait 1-2 seconds for files to appear.
 
-Po spuštění počkej 1-2 sekundy, automaticky se vytvoří všechny soubory.
-
-### Metoda 3: Manuální reload
-
-V Minecraftu:
-
+#### Method 3: Manual Reload
 ```
 /reload
 ```
+After reload completes (~2 seconds), export runs automatically.
 
-Po reloadu počkej ~2 sekundy, dump a rozdělení proběhne automaticky.
+---
 
-## ⚙️ Jak to funguje (automatické rozdělení)
+## 📂 Output Files
 
-### KubeJS 6+ Omezení
-
-KubeJS 6+ **nepovoluje** přístup k Java třídám z JavaScriptu (`java()` už není podporováno).
-Proto se používá **dvoustupňový proces**:
-
-1. **JavaScript část** (registryDump.js):
-
-   - Sbírá data z registrů
-   - Vytvoří kombinovaný soubor `registry-data-all.json` přes JsonIO
-
-2. **Java část** (RegistryDumpPlugin):
-   - Spustí vlákno `RegistryDump-AutoSplit`
-   - Čeká až 30 sekund na vytvoření `registry-data-all.json`
-   - Automaticky ho rozdělí pomocí `splitRegistryDataAll()` metody
-   - Vytvoří jednotlivé soubory: `biomes.json`, `entities.json`, `structures.json`
-
-### Co uvidíš v logu
+All files are saved to the **instance root** in the `exports/` folder:
 
 ```
-[INFO]: ✓ Exports directory already exists: C:\...\Instances\Unicorn\exports
+exports/
+├── biomes.json                    (81 biomes, auto-generated)
+├── entities.json                  (143 entity types, auto-generated)
+├── structures.json                (38 structures, auto-generated)
+├── registry-data-all.json         (combined data, processed)
+├── registry-dump.summary.json     (timing statistics)
+└── _probe.json                    (status check)
+```
+
+**Full path example:**
+```
+C:\Users\<username>\curseforge\minecraft\Instances\<YourInstance>\exports\
+```
+
+---
+
+## ⚙️ How It Works
+
+### Technical Architecture
+
+Due to KubeJS 6+ security restrictions (removed `java()` global access), Registry Dump Helper uses a **two-stage process**:
+
+#### Stage 1: JavaScript Collection (registryDump.js)
+- Collects data from Minecraft registries (BIOME, ENTITY_TYPE, STRUCTURE)
+- Writes combined JSON via `JsonIO` → `registry-data-all.json`
+- Runs on server load, chat command, or manual reload
+
+#### Stage 2: Automatic Java Processing (RegistryDumpPlugin)
+- Background thread `RegistryDump-AutoSplit` monitors for file creation
+- Waits up to 30 seconds for `registry-data-all.json`
+- Automatically splits it into individual files:
+  - `biomes.json`
+  - `entities.json`
+  - `structures.json`
+- Creates summary and probe files
+
+### Server Log Output
+
+```
+[INFO]: ✓ Exports directory created: C:\...\Instances\YourInstance\exports
 [INFO]: KubeJS RegistryUtil binding registered v1.0.3
-[INFO]: [registryDump] Emergency: Written all data to registry-data-all.json
+[INFO]: [registryDump] Starting dump...
+[INFO]: [registryDump] ✓ Written registry-data-all.json
 [INFO]: ✓ Detected registry-data-all.json, auto-splitting...
 [INFO]: [RegistryUtil] Reading registry-data-all.json...
-[INFO]: [RegistryUtil] ✓ Created biomes.json
-[INFO]: [RegistryUtil] ✓ Created entities.json
+[INFO]: [RegistryUtil] ✓ Created biomes.json (81 entries)
+[INFO]: [RegistryUtil] ✓ Created entities.json (143 entries)
 [INFO]: [RegistryUtil] ✓ Created structures.json
 [INFO]: [RegistryUtil] ✓✓✓ Split completed successfully!
 ```
 
-## ⚠️ DŮLEŽITÉ - První spuštění
+---
 
-### Žádné speciální kroky!
+## 📁 Output Files & Formats
 
-Na rozdíl od starších verzí **NENÍ** třeba restartovat server. Vše funguje automaticky:
-
-1. Nainstaluj mod do `mods/` složky
-2. Spusť Minecraft
-3. Načti svět
-4. Počkej 2-3 sekundy
-5. ✅ Všechny soubory jsou v `exports/` složce
-
-### Ověření, že funguje správně
-
-V logu by mělo být:
-
-```
-[INFO]: KubeJS RegistryUtil binding registered v1.0.3
-[INFO]: [registryDump] BIOMES: 81
-[INFO]: [registryDump] ENTITIES: 143
-[INFO]: [registryDump] STRUCTURES: 38
-[INFO]: ✓ Detected registry-data-all.json, auto-splitting...
-[INFO]: ✓✓✓ Split completed successfully!
-```
-
-## 📁 Výstupní soubory
-
-### biomes.json
-
-Obsahuje všechny biomy ve formátu:
+### `biomes.json` - All Minecraft Biomes (81 entries)
 
 ```json
 [
@@ -140,15 +134,14 @@ Obsahuje všechny biomy ve formátu:
     "name": "Plains",
     "category": "plains",
     "temperature": 0.8,
+    "downfall": 0.4,
     "precipitation": "rain"
   },
   ...
 ]
 ```
 
-### entities.json
-
-Obsahuje všechny typy entit:
+### `entities.json` - All Entity Types (143 entries)
 
 ```json
 [
@@ -157,219 +150,224 @@ Obsahuje všechny typy entit:
     "category": "monster",
     "fireImmune": false,
     "canSpawnFarFromPlayer": true,
-    "clientTrackingRange": 8
+    "clientTrackingRange": 8,
+    "updateInterval": 3
   },
   ...
 ]
 ```
 
-### structures.json
-
-Obsahuje všechny struktury:
+### `structures.json` - All Structures (38 entries)
 
 ```json
 [
   {
     "id": "minecraft:village",
-    "biomes": ["minecraft:plains", "minecraft:desert", ...],
+    "biomes": ["minecraft:plains", "minecraft:desert", "minecraft:savanna"],
     "terrainAdaptation": "beard_thin"
   },
   ...
 ]
 ```
 
-## 🔄 Technické pozadí (pro pokročilé)
+### `registry-data-all.json` - Combined Data
 
-### Proč kombinovaný soubor + rozdělení?
-
-KubeJS 6+ odstranil podporu `java()` globálního objektu z bezpečnostních důvodů.
-To znamená, že JavaScript nemůže přímo volat Java metody, i když jsou registrované jako bindings.
-
-**Řešení:**
-
-- JavaScript používá `JsonIO.write()` (jediná funkční metoda) → vytvoří `registry-data-all.json`
-- Java vlákno detekuje vytvoření souboru a automaticky ho rozdělí
-- Výsledek: 3 jednotlivé JSON soubory bez nutnosti JavaScript-Java komunikace
-
-### Struktura registry-data-all.json
+Complete registry data in one file with metadata:
 
 ```json
 {
-  "biomes": [
-    {"id": "minecraft:plains", "name": "Plains", ...},
-    ...81 položek...
-  ],
-  "entities": [
-    {"id": "minecraft:zombie", "category": "monster", ...},
-    ...143 položek...
-  ],
-  "structures": [
-    {"id": "minecraft:village", "biomes": [...], ...},
-    ...38 položek...
-  ],
+  "biomes": [...],
+  "entities": [...],
+  "structures": [...],
   "_metadata": {
-    "timestamp": "...",
+    "timestamp": "2025-11-09T10:30:45.123Z",
     "counts": {"biomes": 81, "entities": 143, "structures": 38},
-    "note": "Automatically split by Java mod"
+    "version": "1.0.3"
   }
 }
 ```
 
-## 🐛 Řešení problémů
+---
 
-### Soubory se negenerují
+## 🐛 Troubleshooting
 
-1. ✅ Zkontroluj logy - hledej "auto-splitting" nebo "Split completed"
-2. ✅ Ověř, že `mods/registrydumphelper-1.20.1-forge-1.0.3.jar` existuje
-3. ✅ Zkontroluj, že `exports/registry-data-all.json` existuje
-4. ❗ Počkej plných 5 sekund po načtení světa (auto-split běží na pozadí)
-5. ✅ Zkontroluj složku `exports/` v kořenovém adresáři instance (ne v `kubejs/exports/`)
+### Problem: Files not generating
 
-### Kde přesně je složka exports?
+**Solution:**
+1. Check server logs for "auto-splitting" message
+2. Verify `registrydumphelper-1.20.1-forge-1.0.3.jar` exists in `mods/`
+3. Verify `exports/registry-data-all.json` was created
+4. **Wait 5+ seconds** - auto-split runs in background
+5. Check `exports/` is in instance root, NOT in `kubejs/exports/`
 
-Správná cesta je **v kořenovém adresáři instance**, ne v `kubejs/`:
+### Problem: Only `registry-data-all.json` exists
 
-```
-C:\Users\<username>\curseforge\minecraft\Instances\<NázevInstance>\exports\
-```
+Auto-split hasn't completed yet:
+- Wait another 5 seconds
+- Check logs for: `✓ Detected registry-data-all.json, auto-splitting...`
+- If not in logs, restart Minecraft
 
-NIKOLI:
+### Problem: "global.RegistryUtil exists: false"
 
-```
-C:\Users\<username>\curseforge\minecraft\Instances\<NázevInstance>\kubejs\exports\
-```
+✅ **Normal** - KubeJS 6+ limitation. Export still works correctly using background thread.
 
-### Soubory jsou pouze registry-data-all.json, chybí ostatní
+### Problem: Chat command `!dumpregs` doesn't work
 
-Znamená to, že auto-split ještě neproběhl:
+- Make sure you type: `!dumpregs` (no `/`)
+- Wait 1-2 seconds
+- Check logs for export messages
 
-- Počkej dalších 5 sekund
-- Zkontroluj logy - hledej `✓ Detected registry-data-all.json, auto-splitting...`
-- Pokud není v logu, restartuj Minecraft
+---
 
-### Chyby v logu
+## ✅ Verification Checklist
 
-- **"global.RegistryUtil exists: false"** - normální, KubeJS 6+ omezení
-- **"WARNING: splitRegistryData not available"** - normální, JavaScript nemá přístup k bindingům
-- **"Using emergency text-based fallback"** - správně! To je záměr
-- **"redeclaration of var"** - ignoruj, re-entrant guard
+- [ ] `registrydumphelper-1.20.1-forge-1.0.3.jar` in `mods/` folder
+- [ ] `registryDump.js` in `kubejs/server_scripts/`
+- [ ] Minecraft started and world loaded
+- [ ] Waited 2-3 seconds after loading
+- [ ] Server logs show: "KubeJS RegistryUtil binding registered v1.0.3"
+- [ ] Server logs show: "✓ Detected registry-data-all.json, auto-splitting..."
+- [ ] Server logs show: "✓✓✓ Split completed successfully!"
+- [ ] Found `exports/` folder in instance root
+- [ ] Contains: `biomes.json`, `entities.json`, `structures.json`, `registry-data-all.json`
 
-### Starý helper mod (v1.0.1)
+---
 
-Pokud máš v `mods/` starší verzi:
+## 📊 Statistics (v1.0.3)
 
-1. Smaž `registrydumphelper-1.0.1.jar`
-2. Zkopíruj nový `registrydumphelper-1.20.1-forge-1.0.3.jar`
-3. Restartuj Minecraft
+| Category | Count | Time |
+|----------|-------|------|
+| Biomes   | 81    | ~46ms |
+| Entities | 143   | ~13ms |
+| Structures | 38  | ~5ms  |
+| **Total** | **262** | **~77ms** |
 
-## 📊 Statistiky (aktuální dump)
+---
 
-- **Biomy:** 81
-- **Entity:** 143
-- **Struktury:** 38
-- **Celkový čas:** ~77ms
-  - Biomy: ~46ms
-  - Entity: ~13ms
-  - Struktury: ~5ms
+## 📋 Requirements
 
-## 🔧 Technické detaily
+- **Minecraft Version:** 1.20.1
+- **Forge Version:** 47.x or later
+- **KubeJS Version:** 2001.6.x (KubeJS 6+)
+- **Java:** Java 17 or later
 
-### Použité technologie
+---
 
-- **Minecraft Forge:** 47.4.0
-- **KubeJS:** 2001.6.5-build.16 (KubeJS 6+)
-- **Rhino:** JavaScript engine (součást KubeJS)
-- **Java NIO:** java.nio.file.Files, java.nio.file.Paths
+## 🔧 For Developers
 
-### Helper Mod komponenty (v1.0.3)
+### Building from Source
 
-1. **RegistryDumpPlugin** - KubeJS plugin
-   - Vytváří `exports/` složku při startu
-   - Spouští auto-split vlákno
-   - Registruje RegistryUtilBinding (nefunkční v KubeJS 6+, ale pro zpětnou kompatibilitu)
-2. **RegistryUtilBinding** - Utility třída
+```bash
+# Windows
+gradlew.bat jar
 
-   - `getGameDirectory()` - zjistí kořenový adresář instance
-   - `splitRegistryDataAll()` - rozdělí kombinovaný JSON na jednotlivé soubory
-   - `findMatchingBracket()` - pomocná metoda pro JSON parsing
-
-3. Whitelisted třídy (ClassFilter):
-   - `net.minecraft.core.registries.*`
-   - `net.minecraft.core.Registry*`
-   - `java.nio.file.*`
-   - `java.util.*`
-
-### Script funkce (registryDump.js)
-
-- `dumpRegistries()` - hlavní funkce pro sběr dat
-- `collectIds()` - pomocná funkce pro sběr ID
-- `collectFromReg()` - iterace přes registry
-- Re-entrant guard: `global.__kjs_registry_dump_running`
-- **Zápis:** Pouze přes `JsonIO.write()` (jediná funkční metoda v KubeJS 6+)
-
-### Workflow zpracování
-
-```
-1. ServerEvents.loaded
-   ↓
-2. registryDump.js spustí dumpRegistries()
-   ↓
-3. Sběr dat z registrů (81 biomes, 143 entities, 38 structures)
-   ↓
-4. JsonIO.write('exports/registry-data-all.json', {...})
-   ↓
-5. Auto-split vlákno detekuje soubor
-   ↓
-6. RegistryUtilBinding.splitRegistryDataAll()
-   ↓
-7. Vytvoření biomes.json, entities.json, structures.json
-   ↓
-8. ✅ Hotovo
+# Linux/Mac
+./gradlew jar
 ```
 
-## 📝 Poznámky
+**Output:** `build/libs/registrydumphelper-1.20.1-forge-1.0.3.jar`
 
-- Script má DEBUG režim (DEBUG_SCAN=true) - lze vypnout v řádku 68
-- Podporuje více eventů: ServerEvents.loaded, PlayerEvents.loggedIn, ServerEvents.tick
-- Chat příkaz: `!dumpregs` (bez lomítka)
-- Guard zabraňuje paralelním běhům (důležité pro ServerEvents.tick)
-
-## 🎯 Rychlý start checklist
-
-- [ ] Helper mod `registrydumphelper-1.20.1-forge-1.0.3.jar` v `mods/` složce
-- [ ] Minecraft spuštěn
-- [ ] Svět načten
-- [ ] Počkat 2-3 sekundy po načtení
-- [ ] V logu: "KubeJS RegistryUtil binding registered v1.0.3"
-- [ ] V logu: "✓ Detected registry-data-all.json, auto-splitting..."
-- [ ] V logu: "✓✓✓ Split completed successfully!"
-- [ ] Zkontrolovat složku `exports/` v kořeni instance
-- [ ] ✅ 4 JSON soubory: `biomes.json`, `entities.json`, `structures.json`, `registry-data-all.json`
-
-## 📂 Umístění souborů
-
-**Správná cesta:**
+### Project Structure
 
 ```
-<Instance>\
-├── mods\
+src/main/java/registrydumphelper/
+├── RegistryDumpPlugin.java       # KubeJS plugin + auto-split thread
+├── RegistryUtilBinding.java      # JSON splitting & file I/O
+└── RegistryDumpHelperMod.java    # (deprecated)
+
+src/main/resources/
+├── kubejs.plugins.txt
+├── pack.mcmeta
+└── META-INF/mods.toml
+```
+
+### Key Classes
+
+| Class | Purpose |
+|-------|---------|
+| `RegistryDumpPlugin` | KubeJS plugin entry, spawns auto-split thread |
+| `RegistryUtilBinding` | JSON parsing, file writing, directory detection |
+| `RegistryDump-AutoSplit` | Background thread monitoring file creation |
+
+---
+
+## 📝 Version History
+
+### v1.0.3 (Latest - 2025-11-09)
+
+✅ Automatic JSON splitting  
+✅ KubeJS 6+ compatibility  
+✅ Background thread processing  
+✅ Instance-level exports folder  
+
+### v1.0.2 (2025-11-09 - Internal)
+
+- Testing binding registration methods
+- (Experimental)
+
+### v1.0.1 (2025-11-09 - Initial)
+
+- Basic registry dump functionality
+- Manual file splitting
+- Required full server restart
+
+---
+
+## 📂 Installation Paths
+
+### Correct Setup
+
+```
+<Instance Root>/
+├── mods/
 │   └── registrydumphelper-1.20.1-forge-1.0.3.jar
-├── kubejs\
-│   └── server_scripts\
+├── kubejs/
+│   └── server_scripts/
 │       └── registryDump.js
-└── exports\          ← TADY jsou výstupní soubory!
+└── exports/                      ← Output files
     ├── biomes.json
     ├── entities.json
     ├── structures.json
-    ├── registry-data-all.json
-    ├── registry-dump.summary.json
-    └── _probe.json
+    └── registry-data-all.json
+```
+
+### Example Path
+
+```
+C:\Users\Username\curseforge\minecraft\Instances\MyInstance\exports\
 ```
 
 ---
 
-**Verze:** 1.0.3  
-**Datum:** 9. listopadu 2025  
-**Minecraft:** 1.20.1  
-**Forge:** 47.4.0  
-**KubeJS:** 2001.6.5-build.16 (KubeJS 6+)
+## ❓ FAQ
+
+**Q: Do I need to restart the server?**  
+A: No! Just wait 2-3 seconds after loading.
+
+**Q: Can I use multiple instances?**  
+A: Yes! Each instance has its own `exports/` folder.
+
+**Q: What if I update my mods?**  
+A: Run `!dumpregs` or `/reload` to re-dump the data.
+
+**Q: Is this safe?**  
+A: Yes! It only reads registries and writes to a local folder.
+
+---
+
+## 📜 License
+
+**GNU General Public License v3** - Free software for everyone!
+
+---
+
+## 🤝 Contributing
+
+Found a bug? Have suggestions?  
+Visit: [GitHub Repository](https://github.com/Purple-unic-corn/registrydumphelper-kubejs-forge-1.20.1)
+
+---
+
+**Last Updated:** November 11, 2025  
+**Version:** 1.0.3  
+**Status:** Active Development

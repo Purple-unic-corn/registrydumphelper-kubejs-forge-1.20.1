@@ -93,10 +93,10 @@ public class RegistryUtilBinding {
     }
 
     /**
-     * Získá absolutní cestu k game directory z Minecraft serveru.
+     * Gets the absolute path to game directory from Minecraft server.
      * 
      * @param server MinecraftServer instance
-     * @return Path k game directory nebo null při chybě
+     * @return Path to game directory or null on error
      */
     private static Path getGameDirectory(Object server) {
         try {
@@ -108,7 +108,7 @@ public class RegistryUtilBinding {
                 return Paths.get(".").toAbsolutePath().normalize();
             }
 
-            // Zkus server.getServerDirectory() (Forge 1.20.1)
+            // Try server.getServerDirectory() (Forge 1.20.1)
             try {
                 Method getServerDirectory = server.getClass().getMethod("getServerDirectory");
                 Object dirObj = getServerDirectory.invoke(server);
@@ -130,7 +130,7 @@ public class RegistryUtilBinding {
                 System.err.println("[RegistryUtil] Error calling getServerDirectory(): " + e.getMessage());
             }
 
-            // Zkus server.getFile("") (starší verze)
+            // Try server.getFile("") (older versions)
             try {
                 Method getFile = server.getClass().getMethod("getFile", String.class);
                 Object dirObj = getFile.invoke(server, "");
@@ -146,7 +146,7 @@ public class RegistryUtilBinding {
                 System.err.println("[RegistryUtil] Error calling getFile(): " + e.getMessage());
             }
 
-            // Fallback na current directory
+            // Fallback to current directory
             System.out.println("[RegistryUtil] Using fallback: current directory");
             return Paths.get(".").toAbsolutePath().normalize();
         } catch (Throwable t) {
@@ -157,23 +157,23 @@ public class RegistryUtilBinding {
     }
 
     /**
-     * Zapíše JSON string do souboru v game directory.
+     * Writes JSON string to file in game directory.
      * 
-     * @param relativePath Relativní cesta k souboru (např. "exports/biomes.json")
-     * @param jsonContent  JSON string k zapsání
-     * @return true pokud úspěch, false při chybě
+     * @param relativePath Relative file path (e.g., "exports/biomes.json")
+     * @param jsonContent  JSON string to write
+     * @return true if success, false on error
      */
     public boolean writeJsonFile(String relativePath, String jsonContent) {
         return writeJsonFile(relativePath, jsonContent, null);
     }
 
     /**
-     * Zapíše JSON string do souboru v game directory.
+     * Writes JSON string to file in game directory.
      * 
-     * @param relativePath Relativní cesta k souboru (např. "exports/biomes.json")
-     * @param jsonContent  JSON string k zapsání
-     * @param server       MinecraftServer instance (může být null pro fallback)
-     * @return true pokud úspěch, false při chybě
+     * @param relativePath Relative file path (e.g., "exports/biomes.json")
+     * @param jsonContent  JSON string to write
+     * @param server       MinecraftServer instance (can be null for fallback)
+     * @return true if success, false on error
      */
     public boolean writeJsonFile(String relativePath, String jsonContent, Object server) {
         System.out.println("[RegistryUtil] ========== writeJsonFile START ==========");
@@ -183,7 +183,7 @@ public class RegistryUtilBinding {
         System.out.println("[RegistryUtil] server: " + (server != null ? server.getClass().getName() : "null"));
 
         try {
-            // Získej game directory
+            // Get game directory
             Path gameDir = getGameDirectory(server);
             if (gameDir == null) {
                 System.err.println("[RegistryUtil] ERROR: gameDir is null, using current directory");
@@ -192,7 +192,7 @@ public class RegistryUtilBinding {
 
             System.out.println("[RegistryUtil] Game directory resolved to: " + gameDir.toAbsolutePath());
 
-            // Vytvoř složku exports pokud neexistuje
+            // Create exports folder if it doesn't exist
             Path exportsDir = gameDir.resolve("exports");
             System.out.println("[RegistryUtil] Exports directory path: " + exportsDir.toAbsolutePath());
             System.out.println("[RegistryUtil] Exports directory exists before creation: " + Files.exists(exportsDir));
@@ -207,18 +207,18 @@ public class RegistryUtilBinding {
 
             System.out.println("[RegistryUtil] Exports directory exists after creation: " + Files.exists(exportsDir));
 
-            // Vytvoř absolutní cestu k souboru
+            // Create absolute path to file
             Path path = gameDir.resolve(relativePath).normalize();
             System.out.println("[RegistryUtil] Full file path: " + path.toAbsolutePath());
 
-            // Vytvoř všechny parent adresáře pokud neexistují
+            // Create all parent directories if they don't exist
             if (path.getParent() != null) {
                 System.out.println("[RegistryUtil] Creating parent directories: " + path.getParent().toAbsolutePath());
                 Files.createDirectories(path.getParent());
                 System.out.println("[RegistryUtil] ✓ Parent directory structure verified");
             }
 
-            // Zapiš soubor
+            // Write file
             System.out.println("[RegistryUtil] Writing file...");
             Files.writeString(path, jsonContent, StandardCharsets.UTF_8);
             System.out.println("[RegistryUtil] ✓✓✓ File written successfully: " + path.getFileName());
@@ -233,15 +233,15 @@ public class RegistryUtilBinding {
     }
 
     /**
-     * Instance metoda pro volání z JavaScriptu
+     * Instance method for calling from JavaScript
      */
     public void splitRegistryData() {
         splitRegistryDataAll();
     }
 
     /**
-     * Rozdělí registry-data-all.json na jednotlivé soubory.
-     * Static metoda pro snadné volání z JavaScriptu.
+     * Splits registry-data-all.json into individual files.
+     * Static method for easy calling from JavaScript.
      */
     public static void splitRegistryDataAll() {
         try {

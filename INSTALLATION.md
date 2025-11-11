@@ -189,7 +189,7 @@ Look in `logs/latest.log`:
 
 ## 📝 License
 
-MIT License - Free to use, modify, and distribute.
+GNU General Public License v3 - Free software licensed under GPL v3.
 
 ## 🤝 Contributing
 

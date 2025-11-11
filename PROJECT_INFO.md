@@ -1,61 +1,65 @@
 # 📦 Registry Dump Helper - GitHub Release Package
 
-Kompletní balíček připravený pro nahrání na GitHub.
+Complete package ready for GitHub upload.
 
-## 📁 Struktura projektu
+## 📁 Project Structure
 
 ```
-registrydumphelper-release/
+registrydumphelper/
 │
-├── 📄 README.md                          # Kompletní dokumentace
-├── 📄 INSTALLATION.md                    # Instalační průvodce
-├── 📄 CHANGELOG.md                       # Historie změn
-├── 📄 LICENSE                            # MIT License
-├── 📄 .gitignore                         # Git ignore pravidla
+├── 📄 README.md                          # Complete documentation
+├── 📄 INSTALLATION.md                    # Installation guide
+├── 📄 CHANGELOG.md                       # Version history
+├── 📄 LICENSE                            # GNU GPL v3 License
+├── 📄 .gitignore                         # Git ignore rules
 │
-├── 🎮 registrydumphelper-1.20.1-forge-1.0.3.jar  # ✅ Zkompilovaný mod v1.0.3
-├── 📜 registryDump.js                    # ✅ KubeJS script (do kubejs/server_scripts/)
+├── 🎮 registrydumphelper-1.20.1-forge-1.0.3.jar  # ✅ Compiled mod v1.0.3
+├── 📜 registryDump.js                    # ✅ KubeJS script (→ kubejs/server_scripts/)
 │
-├── 🔨 build.gradle                       # Gradle build konfigurace
-├── 🔨 settings.gradle                    # Gradle nastavení
+├── 🔨 build.gradle                       # Gradle build configuration
+├── 🔨 settings.gradle                    # Gradle settings
 ├── 🔨 gradlew.bat                        # Gradle wrapper (Windows)
 │
-├── 📂 gradle/                            # Gradle wrapper soubory
+├── 📂 gradle/                            # Gradle wrapper files
 │   └── wrapper/
 │       ├── gradle-wrapper.jar
 │       └── gradle-wrapper.properties
 │
-├── 📂 src/                               # Zdrojový kód helper modu
+├── 📂 src/                               # Source code for helper mod
 │   └── main/
 │       ├── java/
 │       │   └── registrydumphelper/
-│       │       ├── RegistryDumpHelperMod.java      # Hlavní třída modu (deprecated)
+│       │       ├── RegistryDumpHelperMod.java      # Main mod class (deprecated)
 │       │       ├── RegistryDumpPlugin.java         # KubeJS plugin + auto-split
 │       │       └── RegistryUtilBinding.java        # JSON splitting + file I/O
 │       └── resources/
-│           ├── kubejs.plugins.txt                   # Plugin registrace
+│           ├── kubejs.plugins.txt                   # Plugin registration
 │           ├── pack.mcmeta                          # Resource pack metadata
 │           └── META-INF/
-│               └── mods.toml                        # Forge mod konfigurace
+│               └── mods.toml                        # Forge mod configuration
 │
-└── 📂 examples/                          # Ukázkové výstupy
+├── 📂 examples/                          # Sample outputs
     ├── biomes-sample.json
     ├── entities-sample.json
     └── structures-sample.json
+
+└── 📂 build/                             # Build output (generated)
+    └── libs/
+        └── registrydumphelper-1.20.1-forge-1.0.3.jar
 ```
 
 ## 🚀 Quick Start
 
-### Pro běžné uživatele:
+### For Regular Users:
 
-1. Stáhni `registrydumphelper-1.20.1-forge-1.0.3.jar` a `registryDump.js`
-2. Zkopíruj JAR do `mods/`
-3. Zkopíruj `registryDump.js` do `kubejs/server_scripts/`
-4. Spusť Minecraft a načti svět
-5. Počkaj 2-3 sekundy
-6. Soubory najdeš v `exports/` (v kořeni instance, NE v kubejs/)
+1. Download `registrydumphelper-1.20.1-forge-1.0.3.jar` and `registryDump.js`
+2. Copy JAR to `mods/`
+3. Copy `registryDump.js` to `kubejs/server_scripts/`
+4. Start Minecraft and load a world
+5. Wait 2-3 seconds
+6. Find files in `exports/` (in instance root, NOT in kubejs/)
 
-### Pro vývojáře:
+### For Developers:
 
 ```bash
 # Windows
@@ -63,81 +67,85 @@ gradlew.bat jar
 
 # Linux/Mac
 ./gradlew jar
+
+# Output: build/libs/registrydumphelper-1.20.1-forge-1.0.3.jar
 ```
 
-## 📊 Velikosti souborů
+## 📊 File Sizes
 
-- **registrydumphelper-1.20.1-forge-1.0.3.jar**: ~8.4 KB (v1.0.3)
+- **registrydumphelper-1.20.1-forge-1.0.3.jar**: ~8.4 KB
 - **registryDump.js**: ~52 KB
-- **Celkem zdrojový kód**: ~18 KB
+- **Source code total**: ~18 KB
 
-## 🎯 Co tento balíček obsahuje
+## 🎯 Package Contents
 
-### ✅ Připravené k použití:
+### ✅ Ready to Use:
 
-- Zkompilovaný JAR mod (v1.0.3)
-- Funkční KubeJS script
-- Automatické rozdělování JSON souborů
-- Kompletní dokumentace
-- Ukázky výstupů
+- Compiled JAR mod (v1.0.3)
+- Functional KubeJS script
+- Automatic JSON file splitting
+- Complete documentation
+- Sample outputs
 
-### ✅ Pro vývojáře:
+### ✅ For Developers:
 
-- Plný zdrojový kód
-- Gradle build systém
-- Komentovaný kód včetně auto-split logiky
-- Build instrukce
+- Full source code
+- Gradle build system
+- Commented code with auto-split logic
+- Build instructions
 
-### ✅ Pro GitHub:
+### ✅ For GitHub:
 
-- README.md (aktualizovaný pro v1.0.3)
-- LICENSE (MIT)
+- README.md (updated for v1.0.3)
+- LICENSE (GNU GPL v3)
 - .gitignore
-- CHANGELOG.md (verze 1.0.1, 1.0.2, 1.0.3)
-- Příklady
+- CHANGELOG.md (v1.0.1, v1.0.2, v1.0.3)
+- Sample files
 
-## 📋 Požadavky
+## 📋 Requirements
 
-- Minecraft: 1.20.1
-- Forge: 47.4.0+
-- KubeJS: 2001.6.5-build.16+ (KubeJS 6+)
-- Java: 17+
+- **Minecraft:** 1.20.1
+- **Forge:** 47.4.0+
+- **KubeJS:** 2001.6.5-build.16+ (KubeJS 6+)
+- **Java:** 17+
 
-## 🆕 Co je nového v v1.0.3
+## 🆕 What's New in v1.0.3
 
-### Hlavní změny:
+### Major Changes:
 
-1. **Automatické rozdělování**: Background thread automaticky rozdělí `registry-data-all.json` na jednotlivé soubory
-2. **Nové umístění**: Soubory se ukládají do `exports/` v kořeni instance místo `kubejs/exports/`
-3. **KubeJS 6+ kompatibilita**: Plná podpora pro KubeJS 6+ včetně obcházení `java()` omezení
-4. **Žádný restart**: Není třeba restartovat server, vše funguje okamžitě
+1. **Automatic Splitting**: Background thread automatically splits `registry-data-all.json` into individual files
+2. **New Location**: Files saved to `exports/` in instance root instead of `kubejs/exports/`
+3. **KubeJS 6+ Support**: Full support for KubeJS 6+ with workarounds for `java()` limitations
+4. **No Restart**: Works immediately without server restart
 
-### Technické detaily:
+### Technical Details:
 
-- Auto-split thread čeká na vytvoření `registry-data-all.json`
-- Jednoduchý JSON parser s bracket matching
-- Vytváří 3 individuální soubory automaticky do 2 sekund
-- Obchází KubeJS 6+ binding access omezení
+- Auto-split thread monitors for `registry-data-all.json` creation
+- Simple JSON parser with bracket matching
+- Creates 3 individual files automatically within 2 seconds
+- Bypasses KubeJS 6+ binding access restrictions
 
-## 🔧 Build ze zdrojů
+## 🔧 Build from Source
 
 ```bash
 # Windows
-gradlew.bat clean build
+gradlew.bat clean jar
 
-# Výstup:
-# build/libs/registrydumphelper-1.0.1.jar
+# Linux/Mac
+./gradlew clean jar
+
+# Output: build/libs/registrydumphelper-1.20.1-forge-1.0.3.jar
 ```
 
-## 📝 Poznámky pro GitHub
+## 📝 GitHub Repository Notes
 
-### Suggested repository name:
+### Suggested Repository Names:
 
 - `minecraft-registry-dump-helper`
 - `kubejs-registry-exporter`
 - `mc-registry-to-json`
 
-### Suggested tags:
+### Suggested Tags:
 
 - minecraft
 - kubejs
@@ -146,37 +154,40 @@ gradlew.bat clean build
 - json-export
 - minecraft-mod
 - data-extraction
+- 1.20.1
 
-### Suggested description:
+### Suggested Description:
 
-"KubeJS helper mod for exporting Minecraft registries (biomes, entities, structures) to JSON files. For Minecraft 1.20.1 Forge."
+"KubeJS helper mod for exporting Minecraft registries (biomes, entities, structures) to JSON. Compatible with Minecraft 1.20.1 Forge and KubeJS 6+."
 
-## 📦 Release Checklist
+## 📦 Pre-Upload Checklist
 
-Před nahráním na GitHub:
+Before uploading to GitHub:
 
-- [x] Zkompilovaný JAR v kořenové složce
-- [x] Kompletní README.md
-- [x] LICENSE soubor
+- [x] Compiled JAR in root folder
+- [x] Complete README.md
+- [x] LICENSE file
 - [x] .gitignore
 - [x] CHANGELOG.md
 - [x] INSTALLATION.md
-- [x] Zdrojový kód v src/
-- [x] Gradle build soubory
-- [x] Ukázkové výstupy v examples/
-- [x] Vše otestováno a funkční
+- [x] Source code in src/
+- [x] Gradle build files
+- [x] Sample outputs in examples/
+- [x] Everything tested and working
 
-## 🎉 Ready to upload!
+## 🎉 Ready for Upload!
 
-Tato složka je připravená k:
+This folder is ready for:
 
-1. Inicializaci Git repository (`git init`)
-2. Nahrání na GitHub
-3. Vytvoření první release verze (v1.0.1)
+1. Git repository initialization (`git init`)
+2. Upload to GitHub
+3. Release version creation (v1.0.3)
+4. CurseForge publication
 
 ---
 
-**Version:** 1.0.1  
+**Version:** 1.0.3  
 **Created:** November 9, 2025  
 **Minecraft:** 1.20.1  
-**Forge:** 47.4.0
+**Forge:** 47.4.0  
+**KubeJS:** 2001.6.5-build.16 (KubeJS 6+)
