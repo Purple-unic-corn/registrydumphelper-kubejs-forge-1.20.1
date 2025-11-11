@@ -1,49 +1,49 @@
 // kubejs/server_scripts/registryDump.js
 // MC 1.20.1 + KubeJS 2001.6.5-build.16
-// Jednorázově vypíše (a uloží do JSON) všechny registry: biomy, entity a struktury.
+// Exports all registries (biomes, entities, structures) to JSON files
 
-// Reset příznaku při každém reloadu, aby se dump mohl znovu pokusit
+// Reset flag on each reload so dump can retry
 global.__kjs_registry_dump_done = false;
-global.__kjs_registry_dump_attempts = global.__kjs_registry_dump_attempts || 0; // Počet pokusů na ticku
-global.__kjs_registry_login_tick = global.__kjs_registry_login_tick || -1; // Tick kdy se hráč přihlásil (pro zpoždění)
-global.__kjs_registry_max_tick_attempts = 20; // původní okamžité pokusy
+global.__kjs_registry_dump_attempts = global.__kjs_registry_dump_attempts || 0; // Number of attempts per tick
+global.__kjs_registry_login_tick = global.__kjs_registry_login_tick || -1; // Tick when player logged in (for delay)
+global.__kjs_registry_max_tick_attempts = 20; // Original immediate attempts
 global.__kjs_registry_delayed_attempt_done =
-  global.__kjs_registry_delayed_attempt_done || false; // zda proběhl zpožděný dump
+  global.__kjs_registry_delayed_attempt_done || false; // Whether delayed dump ran
 global.__kjs_registry_tick_stopped =
-  global.__kjs_registry_tick_stopped || false; // zda jsme ukončili rychlé pokusy
+  global.__kjs_registry_tick_stopped || false; // Whether we stopped immediate attempts
 global.__kjs_registry_chat_retry_counter =
-  global.__kjs_registry_chat_retry_counter || -1; // -1 = žádný chat retry aktivní
-global.__kjs_registry_chat_retry_max = 2; // kolik zpožděných chat pokusů povolíme (kromě okamžitého)
+  global.__kjs_registry_chat_retry_counter || -1; // -1 = no chat retry active
+global.__kjs_registry_chat_retry_max = 2; // How many delayed chat attempts allowed (besides immediate)
 global.__kjs_registry_chat_retry_server =
-  global.__kjs_registry_chat_retry_server || null; // server snapshot pro chat retry
+  global.__kjs_registry_chat_retry_server || null; // Server snapshot for chat retry
 global.__kjs_registry_chat_last_result_sizes =
-  global.__kjs_registry_chat_last_result_sizes || null; // poslední velikosti pro diagnostiku
+  global.__kjs_registry_chat_last_result_sizes || null; // Last sizes for diagnostics
 
-// Re-entrant guard (ochrana proti paralelnímu spuštění dumpRegistries z více eventů/ticků současně)
+// Re-entrant guard (prevents parallel dumpRegistries execution from multiple events/ticks)
 global.__kjs_registry_dump_running =
   global.__kjs_registry_dump_running || false;
 
-// Dočasné globální proměnné pro chat trigger (vyhneme se lokálním deklaracím kvůli Rhino redeclaration bugům)
+// Temporary global variables for chat trigger (avoid local declarations due to Rhino redeclaration bugs)
 global.__kjs_rd_tmp_srv = null;
 global.__kjs_rd_tmp_ok = false;
 
-// Pomocná funkce: pokusí se z různých obalů vytáhnout skutečný MinecraftServer
+// Helper function: tries to extract actual MinecraftServer from various wrappers
 function resolveMcServer(srv) {
   try {
     if (!srv) return null;
-    // Pokud už vypadá jako MC server (má registryAccess/getRegistryAccess), vrať rovnou
+    // If already looks like MC server (has registryAccess/getRegistryAccess), return as-is
     if (
       typeof srv.registryAccess === 'function' ||
       typeof srv.getRegistryAccess === 'function'
     )
       return srv;
-    // KubeJS wrappery často umí getServer()
+    // KubeJS wrappers often have getServer()
     if (typeof srv.getServer === 'function') {
-      // vyhneme se const kvůli redeclaration bugu Rhino
+      // Avoid const due to Rhino redeclaration bug
       var inner = srv.getServer();
       if (inner) return inner;
     }
-    // Některé wrappery ho drží pod minecraftServer/server
+    // Some wrappers hold it under minecraftServer/server
     if (srv.minecraftServer) return srv.minecraftServer;
     if (srv.server) return srv.server;
   } catch (_) {}
@@ -51,7 +51,7 @@ function resolveMcServer(srv) {
 }
 
 function dumpRegistries(server) {
-  // Pokud již běží jeden dump, vynecháme (zabrání redeclaration bugům Rhino)
+  // If dump already running, skip (prevents Rhino redeclaration bugs)
   if (global.__kjs_registry_dump_running) return false;
   global.__kjs_registry_dump_running = true;
   if (!server) {
@@ -61,22 +61,22 @@ function dumpRegistries(server) {
   }
 
   try {
-    // Pozor na Rhino redeclaration bug: nepoužívejme const uvnitř funkce opakovaně při multi-tick/spouštění
-    // Přesun měření času do globální proměnné kvůli opakovaným voláním (Rhino redeclaration bug)
+    // Note on Rhino redeclaration bug: don't use const multiple times in function during multi-tick/runs
+    // Move timing to global variable due to repeated calls (Rhino redeclaration bug)
     global.__kjs_registry_dump_start_ms = Date.now();
     console.log('[registryDump] starting dump...');
-    // Debug přepínače pro těžké fallbacky – ve výchozím stavu vypnuto
-    // Dočasně zapneme DEBUG_SCAN pro diagnostiku chybějících struktur (vypni až bude hotovo)
-    var DEBUG_SCAN = true; // projde registryAccess.registries() stream a hledá dle názvu
-    var DEBUG_BRUTE = false; // hluboký brute-force přes reflexi (pomalé, jen pro diagnostiku)
-    // Ujisti se, že cílová složka existuje – vynecháno (java.io.File blokováno class filtrem v tomto buildu)
-    // JsonIO.write níže cíl 'exports' obvykle vytvoří adresář automaticky.
+    // Debug switches for heavy fallbacks – disabled by default
+    // Temporarily enable DEBUG_SCAN for diagnostics of missing structures (disable when done)
+    var DEBUG_SCAN = true; // Will scan registryAccess.registries() stream and search by name
+    var DEBUG_BRUTE = false; // Deep brute-force via reflection (slow, diagnostics only)
+    // Verify target folder exists – skipped (java.io.File blocked by class filter in this build)
+    // JsonIO.write below usually creates 'exports' directory automatically.
 
     // Java API (1.20.1)
     var Registries = global.__RegistryDump_Registries;
     if (!Registries) {
       try {
-        // Preferuj Java.type – lépe zpřístupní statická pole (BIOME apod.) v Rhino
+        // Prefer Java.type – better access to static fields (BIOME etc.) in Rhino
         Registries = Java.type('net.minecraft.core.registries.Registries');
       } catch (rtErr) {
         try {
@@ -116,11 +116,11 @@ function dumpRegistries(server) {
       }
     } catch (_d1) {}
 
-    // Získej skutečný MinecraftServer (wrappery mohou mít jiné tvary)
-    // Rozlišený server (vyhnout se redeklaracím názvu)
+    // Get actual MinecraftServer (wrappers may have different shapes)
+    // Resolved server (avoid name redeclarations)
     var srvResolved = resolveMcServer(server);
 
-    // registryAccess(): 1.20.x | getRegistryAccess(): fallback (vyhneme se 'const' kvůli Rhino redeclaration bugům)
+    // registryAccess(): 1.20.x | getRegistryAccess(): fallback (avoid 'const' due to Rhino redeclaration bugs)
     var regAccess =
       srvResolved && typeof srvResolved.registryAccess === 'function'
         ? srvResolved.registryAccess()
@@ -135,7 +135,7 @@ function dumpRegistries(server) {
       return false;
     }
 
-    // Fallback: když by statická pole na Registries nebyla dostupná, zkusíme reflexi a pak ruční vytvoření klíčů
+    // Fallback: if static fields on Registries aren't available, try reflection then manual key creation
     var reflectStaticField = function (className, fieldName) {
       try {
         var Cls = Java.type('java.lang.Class');
@@ -167,7 +167,7 @@ function dumpRegistries(server) {
 
     var regKeyOr = function (staticKey, ns, pathOrArr, staticFieldName) {
       if (staticKey) return staticKey;
-      // Pokus: přečti statické pole přes reflexi (BIOME/ENTITY_TYPE/STRUCTURE)
+      // Try: read static field via reflection (BIOME/ENTITY_TYPE/STRUCTURE)
       if (staticFieldName && !staticKey && Registries) {
         try {
           var refl = reflectStaticField(
@@ -233,7 +233,7 @@ function dumpRegistries(server) {
           console.log('[registryDump] collectFromReg: ' + label + ' is null');
           return [];
         }
-        // Primární cesta: keySet()
+        // Primary path: keySet()
         if (regObj.keySet) {
           var keys = regObj.keySet();
           if (keys && keys.iterator) {
@@ -248,7 +248,7 @@ function dumpRegistries(server) {
               }
             }
           }
-          // Fallback přes forEach Consumer
+          // Fallback via forEach Consumer
           if (arr.length === 0 && keys && keys.forEach) {
             try {
               var Consumer = Java.type('java.util.function.Consumer');
@@ -267,10 +267,10 @@ function dumpRegistries(server) {
             } catch (_cf) {}
           }
         }
-        // Pokud nic nenačteno a je stream() API
+        // If nothing loaded and stream API exists
         if (arr.length === 0 && regObj.stream) {
           try {
-            // Pokus 1: forEach Consumer místo toArray (blokováno)
+            // Attempt 1: forEach Consumer instead of toArray (blocked)
             var Consumer2 = null;
             try {
               Consumer2 = Java.type('java.util.function.Consumer');
@@ -313,7 +313,7 @@ function dumpRegistries(server) {
               regObj.stream().forEach(cons2);
               if (list2.length > 0) arr = list2;
             }
-            // Pokus 2: toArray (původní)
+            // Attempt 2: toArray (original)
             if (arr.length === 0) {
               var streamArr = Java.from(regObj.stream().toArray());
               for (var i = 0; i < streamArr.length; i++) {
@@ -361,7 +361,7 @@ function dumpRegistries(server) {
       return arr;
     };
 
-    // Rekurzivní hluboký brute-force: najdi uvnitř wrapperů Map/registry objekty
+    // Recursive deep brute-force: find Map/registry objects inside wrappers
     var collectByBrute = function (targetLocStrings, lbl) {
       if (!DEBUG_BRUTE) return [];
       var debug = { levels: [] };
@@ -427,7 +427,7 @@ function dumpRegistries(server) {
         if (!obj || depth > maxDepth || already(obj)) return;
         mark(obj);
         pushDebug(depth, obj, 'enter');
-        // Přímý pokus: je to registry?
+        // Direct attempt: is it a registry?
         var regTry = attemptRegistry(obj, lbl + ':Direct');
         if (regTry) {
           results = regTry;
@@ -472,7 +472,7 @@ function dumpRegistries(server) {
                 if (results) return;
               }
             } catch (_bicc) {}
-            // Pokud forEach nevyšel, zkus entrySet + iterator
+            // If forEach failed, try entrySet + iterator
             if (!results) {
               var entrySet = null;
               try {
@@ -526,7 +526,7 @@ function dumpRegistries(server) {
             }
           }
         } catch (_) {}
-        // Rekurzivní reflexe polí
+        // Recursive field reflection
         try {
           var cls = obj.getClass ? obj.getClass() : null;
           if (cls && cls.getDeclaredFields) {
@@ -547,7 +547,7 @@ function dumpRegistries(server) {
                 isNull: val === null,
               });
               if (!val) continue;
-              // Pokud hodnota vypadá jako registry -> pokus
+              // If value looks like registry -> attempt
               var regRes2 = attemptRegistry(val, lbl + ':BruteField');
               if (regRes2) {
                 results = regRes2;
@@ -587,7 +587,7 @@ function dumpRegistries(server) {
       return [];
     };
 
-    // Poslední varianta: projít všechny registry z regAccess.registries() a najít podle názvu registry
+    // Last variant: iterate all registries from regAccess.registries() and find by registry name
     var collectByScan = function (targetLocStrings, lbl) {
       if (!DEBUG_SCAN) return [];
       var out = [];
@@ -603,7 +603,7 @@ function dumpRegistries(server) {
             entries = null;
           }
         }
-        // Fallback: forEach Consumer přes stream
+        // Fallback: forEach Consumer via stream
         if (!entries) {
           try {
             var Consumer3 = Java.type('java.util.function.Consumer');
@@ -617,7 +617,7 @@ function dumpRegistries(server) {
             if (list3.length > 0) entries = list3;
           } catch (_cf3) {}
         }
-        // Fallback: použij spliterator, pokud nelze materializovat pole (class filter blokuje toArray/toList)
+        // Fallback: use spliterator if array cannot be materialized (class filter blocks toArray/toList)
         if (!entries) {
           try {
             var spl = stream.spliterator ? stream.spliterator() : null;
@@ -627,13 +627,13 @@ function dumpRegistries(server) {
                 tmp.push(en);
                 return true;
               };
-              // tryAdvance vrací boolean; opakuj dokud vrací true
+              // tryAdvance returns boolean; repeat while returns true
               while (spl.tryAdvance(advFn)) {}
               if (tmp.length > 0) entries = tmp;
             }
           } catch (_sp) {}
         }
-        // Další fallback: použij přímý iterator() přes stream/iterable
+        // Another fallback: use direct iterator() via stream/iterable
         if (!entries) {
           try {
             var it = stream && stream.iterator ? stream.iterator() : null;
@@ -650,7 +650,7 @@ function dumpRegistries(server) {
             }
           } catch (_it) {}
         }
-        // Nouzová diagnostika: reflexe polí registryAccess (bruteforce) pokud stále nic – vypíše názvy fields
+        // Emergency diagnostics: reflect registryAccess fields (bruteforce) if still nothing - prints field names
         if (!entries) {
           try {
             var ClsRA = regAccess.getClass ? regAccess.getClass() : null;
@@ -679,7 +679,7 @@ function dumpRegistries(server) {
           if (!en) continue;
           var regObj = null;
           try {
-            // Možné tvary: Map.Entry, Pair, vlastní holder
+            // Possible shapes: Map.Entry, Pair, custom holder
             regObj = en.getValue
               ? en.getValue()
               : en.value
@@ -691,7 +691,7 @@ function dumpRegistries(server) {
               : null;
           } catch (_gv) {}
           if (!regObj) continue;
-          // Zjisti klíč registry: přednostně z entry.key(), jinak z registry.key()
+          // Get registry key: preferably from entry.key(), otherwise from registry.key()
           var regKeyOfReg = null;
           try {
             regKeyOfReg = en.getKey
@@ -858,7 +858,7 @@ function dumpRegistries(server) {
       );
     } catch (_dk) {}
 
-    // KubeJS přímé API fallback – pokud Java registry selhávají, získej seznam přes KubeJS registr wrapper
+    // KubeJS direct API fallback - if Java registries fail, get list via KubeJS registry wrapper
     var kubejsBiomeIds = [];
     var kubejsEntityIds = [];
     var kubejsStructureIds = [];
@@ -883,7 +883,7 @@ function dumpRegistries(server) {
               var v = mapObj.get(String(key));
               return v ? v : null;
             } else {
-              // Vyhneme se přístupu property pokud by mohl vracet null z NativeJavaMap.get
+              // Avoid property access if might return null from NativeJavaMap.get
               var tmp = mapObj[key];
               return tmp ? tmp : null;
             }
@@ -892,7 +892,7 @@ function dumpRegistries(server) {
           }
         };
 
-        // Bezpečný odběr wrapperů – pokud cokoliv je null, prostě přeskoč
+        // Safe wrapper retrieval - if anything is null, just skip
         var kjBiome =
           getIfMap(KJReg, 'biome') || getIfMap(KJReg, 'worldgen/biome');
         if (kjBiome && kjBiome.getIds) {
@@ -933,8 +933,8 @@ function dumpRegistries(server) {
         '[registryDump] KubeJS structure ids size=' + kubejsStructureIds.length
       );
 
-    // Dynamický průzkum všech dostupných KubeJS registry wrapperů (pokud existuje global.Registry)
-    // Cíl: zjistit jestli jsou zde další názvy nebo aliasy a uložit kompletní mapu pro diagnostiku.
+    // Dynamic exploration of all available KubeJS registry wrappers (if global.Registry exists)
+    // Goal: determine if there are other names or aliases and store complete map for diagnostics.
     try {
       if (
         global &&
@@ -947,7 +947,7 @@ function dumpRegistries(server) {
           MapCls = Java.type('java.util.Map');
         } catch (_) {}
         var regKeys = [];
-        // Pokud je to Java Map, použij keySet() / iterator místo Object.keys (vyhne se NPE v NativeJavaMap.get)
+        // If it's a Java Map, use keySet() / iterator instead of Object.keys (avoids NPE in NativeJavaMap.get)
         if (
           MapCls &&
           allRegObj instanceof MapCls &&
@@ -1129,7 +1129,7 @@ function dumpRegistries(server) {
       kubejsStructureIds.length > 0
     )
       structures = kubejsStructureIds;
-    // Extra Forge direct field fallback (některé buildy mohou používat jiný název pole)
+    // Extra Forge direct field fallback (some builds may use different field names)
     if ((!structures || structures.length === 0) && ForgeRegistries) {
       try {
         var frStructReg =
@@ -1203,7 +1203,7 @@ function dumpRegistries(server) {
     }
     var tS1 = Date.now();
 
-    // Nový fallback přes RegistryDumpHelper plugin (RegistryUtil binding)
+    // New fallback via RegistryDumpHelper plugin (RegistryUtil binding)
     try {
       if (srvResolved && global && global.RegistryUtil) {
         if ((!biomes || biomes.length === 0) && global.RegistryUtil.getBiomes) {
@@ -1247,8 +1247,8 @@ function dumpRegistries(server) {
       console.log('[registryDump] plugin RegistryUtil fallback error: ' + _plg);
     }
 
-    // Zápis do JSON souborů do /exports
-    // Zápisy prováděj jen pokud máme nenulové hodnoty (zabrání přepsání platných dat nulami při neúspěšném pozdním pokusu)
+    // Write to JSON files in /exports
+    // Only write if we have non-zero values (prevents overwriting valid data with nulls on unsuccessful late attempt)
     if (biomes.length || entities.length || structures.length) {
       console.log(
         '[registryDump] Writing files: biomes=' +
@@ -1280,8 +1280,8 @@ function dumpRegistries(server) {
         );
       }
 
-      // Primární metoda: RegistryUtil.writeJsonFile (Java NIO)
-      // Zkus použít writeJsonFile i když typeof není 'function' (Java metody mohou být jiný typ)
+      // Primary method: RegistryUtil.writeJsonFile (Java NIO)
+      // Try to use writeJsonFile even if typeof is not 'function' (Java methods may be different type)
       if (global.RegistryUtil && global.RegistryUtil.writeJsonFile) {
         console.log(
           '[registryDump] Using RegistryUtil.writeJsonFile (Java NIO)...'
@@ -1346,8 +1346,8 @@ function dumpRegistries(server) {
           '[registryDump] NOTE: exports folder should be created by Java plugin at startup'
         );
 
-        // Emergency fallback: Zapiš všechna data do jednoho objektu
-        // JsonIO selhává při zápisu pole, ale objekt s vlastnostmi funguje
+        // Emergency fallback: Write all data to single object
+        // JsonIO fails on array write, but object with properties works
         try {
           var allData = {
             biomes: biomes,
@@ -1410,9 +1410,9 @@ function dumpRegistries(server) {
         console.log('[registryDump] write summary/probe: ' + e);
       }
 
-      // Zavoláme split funkci pro vytvoření individuálních souborů
+      // Call split function to create individual files
       try {
-        // Zkusíme různé způsoby zavolání split funkce
+        // Try various ways to call split function
         if (global.RegistryUtil && global.RegistryUtil.splitRegistryData) {
           console.log(
             '[registryDump] Calling RegistryUtil.splitRegistryData...'
@@ -1438,7 +1438,7 @@ function dumpRegistries(server) {
       console.log('[registryDump] skipped writing JSON (all empty)');
     }
 
-    // Krátká sumarizace do logu
+    // Brief summary to logs
     console.log(`[registryDump] BIOMES: ${biomes.length}`);
     console.log(`[registryDump] ENTITIES: ${entities.length}`);
     console.log(`[registryDump] STRUCTURES: ${structures.length}`);
@@ -1447,12 +1447,12 @@ function dumpRegistries(server) {
     console.log('[registryDump] unexpected error: ' + err);
     return false;
   } finally {
-    // Uvolni běhový zámek
+    // Release runtime lock
     global.__kjs_registry_dump_running = false;
   }
 }
 
-// Spustit po načtení světa/serveru, aby byly registry k dispozici
+// Run after world/server load so registries are available
 ServerEvents.loaded((event) => {
   if (global.__kjs_registry_dump_done || global.__kjs_registry_dump_running)
     return;
@@ -1461,9 +1461,9 @@ ServerEvents.loaded((event) => {
   }
 });
 
-// Pozdější fallback přes první tick serveru
+// Later fallback via first server tick
 
-// Záložní spuštění i při přihlášení hráče (pokud by se loaded nespustil)
+// Backup trigger on player login (if loaded didn't trigger)
 PlayerEvents.loggedIn((event) => {
   if (global.__kjs_registry_dump_done || global.__kjs_registry_dump_running)
     return;
@@ -1476,12 +1476,12 @@ PlayerEvents.loggedIn((event) => {
     console.log(
       '[registryDump] loggedIn attempt failed (registry access not ready)'
     );
-    // Inicializuj zpožděný dump po 40 ticků
+    // Initialize delayed dump after 40 ticks
     global.__kjs_registry_login_tick = 0;
   }
 });
 
-// Krajní záloha: první serverový tick
+// Last resort: first server tick
 ServerEvents.tick((event) => {
   if (global.__kjs_registry_dump_done || global.__kjs_registry_dump_running)
     return;
@@ -1499,14 +1499,14 @@ ServerEvents.tick((event) => {
           global.__kjs_registry_max_tick_attempts +
           ' failed tries'
       );
-      global.__kjs_registry_tick_stopped = true; // zastav rychlé pokusy, ale neznač hotovo – necháme prostor pro zpožděný pokus
+      global.__kjs_registry_tick_stopped = true; // stop quick attempts but don't mark done - leave room for delayed attempt
     } else if (global.__kjs_registry_dump_attempts % 5 === 0) {
       console.log(
         `[registryDump] tick attempts so far: ${global.__kjs_registry_dump_attempts}`
       );
     }
   }
-  // Zpožděný pokus po loginu: čekej 40 ticků, pak ještě jednou zkus (pokud původní rychlé pokusy vzdaly moc brzy)
+  // Delayed attempt after login: wait 40 ticks, then try once more (if original quick attempts gave up too early)
   if (
     !global.__kjs_registry_delayed_attempt_done &&
     global.__kjs_registry_login_tick >= 0
@@ -1523,7 +1523,7 @@ ServerEvents.tick((event) => {
       }
     }
   }
-  // Chat retry scheduling: pokud byl chat trigger neúspěšný (prázdné registry) nastaví counter = 0 a zde čekáme 20 ticků
+  // Chat retry scheduling: if chat trigger was unsuccessful (empty registries) sets counter = 0 and we wait 20 ticks here
   if (
     global.__kjs_registry_chat_retry_counter >= 0 &&
     !global.__kjs_registry_dump_done
@@ -1538,10 +1538,10 @@ ServerEvents.tick((event) => {
         console.log('[registryDump] chat delayed retry SUCCESS');
       } else {
         console.log('[registryDump] chat delayed retry still empty');
-        // další retry pokud nepřesáhli limit
+        // next retry if didn't exceed limit
         if (global.__kjs_registry_chat_retry_max > 0) {
           global.__kjs_registry_chat_retry_max--;
-          global.__kjs_registry_chat_retry_counter = 0; // restart timing pro další pokus
+          global.__kjs_registry_chat_retry_counter = 0; // restart timing for next attempt
         } else {
           global.__kjs_registry_chat_retry_counter = -1; // konec
         }
@@ -1550,7 +1550,7 @@ ServerEvents.tick((event) => {
   }
 });
 
-// Chat fallback: !dumpregs spustí ručně (pokud se běžné eventy netrefí)
+// Chat fallback: !dumpregs runs manually (if regular events don't trigger)
 PlayerEvents.chat((e) => {
   if (
     String(e.message || '')
@@ -1601,6 +1601,8 @@ PlayerEvents.chat((e) => {
   }
 });
 
-// Zrušeno: Registrace příkazu není ve vaší verzi KubeJS dostupná jednotným API – vynecháno pro čistý log.
+// Skipped: Command registration not available in your KubeJS version via unified API - omitted for clean logs.
 
-// Vynecháno: hookování datových eventů způsobovalo chyby ve vaší verzi KubeJS.
+// Skipped: hooking data events caused errors in your KubeJS version.
+
+

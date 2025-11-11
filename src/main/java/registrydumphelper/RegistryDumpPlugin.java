@@ -47,10 +47,10 @@ public class RegistryDumpPlugin extends KubeJSPlugin {
         filter.allow("java.util.stream.Stream");
         filter.allow("java.util.Iterator");
         filter.allow("java.util.Collection");
-        // Pro jistotu povol i immutable mapu používanou uvnitř RegistryAccess
+        // Allow immutable map implementation used by RegistryAccess
         filter.allow("java.util.ImmutableCollections$MapN");
 
-        // Java NIO pro přímý zápis souborů (fallback když JsonIO selže)
+        // Java NIO for direct file writing (fallback when JsonIO fails)
         filter.allow("java.nio.file.Files");
         filter.allow("java.nio.file.Paths");
         filter.allow("java.nio.file.Path");
@@ -59,7 +59,7 @@ public class RegistryDumpPlugin extends KubeJSPlugin {
 
     @Override
     public void registerBindings(BindingsEvent event) {
-        // Vytvoř složku exports při startu
+        // Create exports folder at startup
         try {
             java.nio.file.Path exportsDir = java.nio.file.Paths.get("exports");
             if (!java.nio.file.Files.exists(exportsDir)) {
@@ -72,24 +72,24 @@ public class RegistryDumpPlugin extends KubeJSPlugin {
             LOGGER.error("✗ Failed to create exports directory: " + e.getMessage(), e);
         }
 
-        // Registruj binding
+        // Register binding
         RegistryUtilBinding binding = new RegistryUtilBinding();
         event.add("RegistryUtil", binding);
 
-        // Registruj také static metodu pro split
+        // Register static method for splitting
         event.add("splitRegistryData", (Runnable) RegistryUtilBinding::splitRegistryDataAll);
 
-        // Spusť vlákno které čeká na vytvoření registry-data-all.json a pak ho
-        // automaticky rozdělí
+        // Start background thread that waits for registry-data-all.json creation
+        // and automatically splits it into individual files
         new Thread(() -> {
             try {
                 java.nio.file.Path allDataFile = java.nio.file.Paths.get("exports/registry-data-all.json");
 
-                // Počkej až 30 sekund na vytvoření souboru
+                // Wait up to 30 seconds for file creation
                 for (int i = 0; i < 60; i++) {
                     Thread.sleep(500);
                     if (java.nio.file.Files.exists(allDataFile)) {
-                        // Soubor existuje, počkej ještě chvíli aby se dokončil zápis
+                        // File exists, wait a bit for write to complete
                         Thread.sleep(1000);
                         LOGGER.info("✓ Detected registry-data-all.json, auto-splitting...");
                         RegistryUtilBinding.splitRegistryDataAll();
