@@ -2,30 +2,29 @@
 // MC 1.20.1 + KubeJS 2001.6.5-build.16
 // Exports all registries (biomes, entities, structures) to JSON files
 
-// Reset flag on each reload so dump can retry
-global.__kjs_registry_dump_done = false;
-global.__kjs_registry_dump_attempts = global.__kjs_registry_dump_attempts || 0; // Number of attempts per tick
-global.__kjs_registry_login_tick = global.__kjs_registry_login_tick || -1; // Tick when player logged in (for delay)
-global.__kjs_registry_max_tick_attempts = 20; // Original immediate attempts
-global.__kjs_registry_delayed_attempt_done =
-  global.__kjs_registry_delayed_attempt_done || false; // Whether delayed dump ran
-global.__kjs_registry_tick_stopped =
-  global.__kjs_registry_tick_stopped || false; // Whether we stopped immediate attempts
-global.__kjs_registry_chat_retry_counter =
-  global.__kjs_registry_chat_retry_counter || -1; // -1 = no chat retry active
-global.__kjs_registry_chat_retry_max = 2; // How many delayed chat attempts allowed (besides immediate)
-global.__kjs_registry_chat_retry_server =
-  global.__kjs_registry_chat_retry_server || null; // Server snapshot for chat retry
-global.__kjs_registry_chat_last_result_sizes =
-  global.__kjs_registry_chat_last_result_sizes || null; // Last sizes for diagnostics
+// Wrap all initialization in try-catch to prevent Rhino NullPointerException
+(function () {
+  try {
+    // Reset flag on each reload so dump can retry
+    global.__kjs_registry_dump_done = false;
 
-// Re-entrant guard (prevents parallel dumpRegistries execution from multiple events/ticks)
-global.__kjs_registry_dump_running =
-  global.__kjs_registry_dump_running || false;
-
-// Temporary global variables for chat trigger (avoid local declarations due to Rhino redeclaration bugs)
-global.__kjs_rd_tmp_srv = null;
-global.__kjs_rd_tmp_ok = false;
+    // Safe initialization - set directly without reading old values
+    global.__kjs_registry_dump_attempts = 0;
+    global.__kjs_registry_login_tick = -1;
+    global.__kjs_registry_max_tick_attempts = 20;
+    global.__kjs_registry_delayed_attempt_done = false;
+    global.__kjs_registry_tick_stopped = false;
+    global.__kjs_registry_chat_retry_counter = -1;
+    global.__kjs_registry_chat_retry_max = 2;
+    global.__kjs_registry_chat_retry_server = null;
+    global.__kjs_registry_chat_last_result_sizes = null;
+    global.__kjs_registry_dump_running = false;
+    global.__kjs_rd_tmp_srv = null;
+    global.__kjs_rd_tmp_ok = false;
+  } catch (e) {
+    console.log('[registryDump] Initialization error: ' + e);
+  }
+})();
 
 // Helper function: tries to extract actual MinecraftServer from various wrappers
 function resolveMcServer(srv) {
@@ -1531,7 +1530,9 @@ ServerEvents.tick((event) => {
     global.__kjs_registry_chat_retry_counter++;
     if (global.__kjs_registry_chat_retry_counter === 20) {
       console.log('[registryDump] chat delayed retry attempt');
-      var srv = global.__kjs_registry_chat_retry_server || event.server;
+      var srv = global.__kjs_registry_chat_retry_server
+        ? global.__kjs_registry_chat_retry_server
+        : event.server;
       var ok2 = dumpRegistries(srv);
       if (ok2) {
         global.__kjs_registry_dump_done = true;
@@ -1604,5 +1605,3 @@ PlayerEvents.chat((e) => {
 // Skipped: Command registration not available in your KubeJS version via unified API - omitted for clean logs.
 
 // Skipped: hooking data events caused errors in your KubeJS version.
-
-
